@@ -439,18 +439,25 @@
           // Handle plurals
           xml += `    <plurals name="${key}">\n`;
           for (const quantity in value) {
-            xml += `        <item quantity="${quantity}">${escapeXML(value[quantity])}</item>\n`;
+            const itemValue = value[quantity];
+            if (itemValue !== undefined) {
+              xml += `        <item quantity="${quantity}">${escapeXML(itemValue)}</item>\n`;
+            }
           }
           xml += '    </plurals>\n';
         } else if (Array.isArray(value)) {
           // Handle arrays
           xml += `    <string-array name="${key}">\n`;
           value.forEach(item => {
-            xml += `        <item>${escapeXML(item)}</item>\n`;
+            if (item !== undefined) {
+              xml += `        <item>${escapeXML(item)}</item>\n`;
+            }
           });
           xml += '    </string-array>\n';
         } else {
-          xml += `    <string name="${key}">${escapeXML(value)}</string>\n`;
+          if (value !== undefined) {
+            xml += `    <string name="${key}">${escapeXML(value)}</string>\n`;
+          }
         }
       }
       
@@ -469,10 +476,10 @@
 
     // Extract special characters
     function extractSpecialChars(text) {
+      if (typeof text !== 'string' || text === '') return [];
       const patterns = [
         /%(\d\$)?[dDfFsScCboxXeEgGaAnNhHtT]/g,
-        /\{(\d+)\}/g,
-        /@@/g,
+        /\{(\d+)\}/g
       ];
       const results = [];
       for (const pattern of patterns) {
@@ -607,11 +614,25 @@
           if (state.filterMode === 'missing' && entry.isTranslated) return false;
           if (state.filterMode === 'translated' && !entry.isTranslated) return false;
           
-          // Search filter
+          // Search filter - improved for array values
           if (state.searchQuery) {
             const q = state.searchQuery.toLowerCase();
-            const sourceStr = typeof entry.sourceValue === 'string' ? entry.sourceValue : JSON.stringify(entry.sourceValue);
-            const targetStr = typeof entry.targetValue === 'string' ? entry.targetValue : JSON.stringify(entry.targetValue);
+            // Handle array values more intelligently
+            let sourceStr, targetStr;
+            if (typeof entry.sourceValue === 'string') {
+              sourceStr = entry.sourceValue;
+            } else if (Array.isArray(entry.sourceValue)) {
+              sourceStr = entry.sourceValue.join(' ');
+            } else {
+              sourceStr = JSON.stringify(entry.sourceValue);
+            }
+            if (typeof entry.targetValue === 'string') {
+              targetStr = entry.targetValue;
+            } else if (Array.isArray(entry.targetValue)) {
+              targetStr = entry.targetValue.join(' ');
+            } else {
+              targetStr = JSON.stringify(entry.targetValue);
+            }
             return (
               entry.key.toLowerCase().includes(q) ||
               sourceStr.toLowerCase().includes(q) ||
@@ -691,13 +712,18 @@
       document.getElementById('filter-count-missing').textContent = toPersianNumber(progress.missing);
       document.getElementById('filter-count-translated').textContent = toPersianNumber(progress.translated);
       
-      // Update filter buttons
-      document.querySelectorAll('.filter-btn').forEach(btn => {
+      // Update filter buttons - improved to ensure correct visual state
+      const filterButtons = document.querySelectorAll('.filter-btn');
+      filterButtons.forEach(btn => {
         const filter = btn.dataset.filter;
         const isActive = filter === state.filterMode;
-        btn.className = `filter-btn w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-          isActive ? 'bg-emerald-100 text-emerald-800 font-medium' : 'text-slate-600 hover:bg-slate-100'
-        }`;
+        // Add active class based on current state
+        if (isActive) {
+          btn.classList.add('bg-emerald-100', 'text-emerald-800', 'font-medium');
+        } else {
+          btn.classList.remove('bg-emerald-100', 'text-emerald-800', 'font-medium');
+          btn.classList.add('text-slate-600');
+        }
       });
       
       // Update filter mode text
@@ -859,12 +885,18 @@
       });
       
       const copyToTranslationBtn = div.querySelector('.copy-to-translation-btn');
-      copyToTranslationBtn.addEventListener('click', () => {
-        state.targetTranslations[entry.key] = entry.sourceValue;
-        copiedToTranslationKey = entry.key;
-        setTimeout(() => copiedToTranslationKey = null, 1500);
-        updateUI();
-      });
+      if (copyToTranslationBtn) {
+        copyToTranslationBtn.addEventListener('click', () => {
+          if (Array.isArray(entry.sourceValue)) {
+            showToast('هشدار', 'آرایه‌ها را نمی‌توان مستقیماً به ترجمه کپی کرد. لطفاً از طریق فایل اصلی ویرایش کنید.', 'default');
+            return;
+          }
+          state.targetTranslations[entry.key] = entry.sourceValue;
+          copiedToTranslationKey = entry.key;
+          setTimeout(() => copiedToTranslationKey = null, 1500);
+          updateUI();
+        });
+      }
       
       const textarea = div.querySelector('.translation-input');
       textarea.addEventListener('input', (e) => {
@@ -992,12 +1024,19 @@
           const content = event.target.result;
           let flat;
           
-          if (detectFileType(file.name) === 'xml' || isXMLContent(content)) {
+          // Check if target file type matches source file type
+          const targetFileType = detectFileType(file.name);
+          if (targetFileType === 'xml' || isXMLContent(content)) {
             const result = parseXML(content);
             flat = result.flat;
           } else {
             const json = JSON.parse(content);
             flat = flattenJSON(json);
+          }
+          
+          // Check if file types match for better UX
+          if (state.sourceFileType && targetFileType !== state.sourceFileType) {
+            showToast('هشدار نوع فایل', `فایل مبدا ${state.sourceFileType === 'xml' ? 'XML' : 'JSON'} است اما فایل مقصد ${targetFileType === 'xml' ? 'XML' : 'JSON'} است. ممکن است برخی کلیدها مطابقت نداشته باشند.`, 'default');
           }
           
           state.targetTranslations = { ...state.targetTranslations, ...flat };
