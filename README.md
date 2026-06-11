@@ -55,10 +55,10 @@ A lightweight, zero-dependency, client-side tool designed for string-by-string l
 
 ```bash
 # کلون کردن مخزن
-git clone https://github.com/your-username/local-translation-tool.git
+git clone https://github.com/mcuteangel/local_translation.git
 
 # ورود به پوشه پروژه
-cd local-translation-tool
+cd local_translation
 
 # اجرا (فقط باز کردن فایل در مرورگر)
 open index.html
