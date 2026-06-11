@@ -1,5 +1,7 @@
 # 🌐 ابزار ترجمه محلی | Local Translation Tool
 
+🌍 [English Version](README_EN.md)
+
 یک ابزار کلاینت‌ساید (Client-side)، سریع و بدون وابستگی (Zero-Dependency) برای بومی‌سازی و ترجمه رشته‌به‌رشته فایل‌های پروژه شامل فرمت‌های **Android XML** و **JSON**. این برنامه به مترجمان اجازه می‌دهد تا فایل‌های زبان برنامه‌ها را بدون به‌هم‌ریختن ساختار، به‌صورت محلی ترجمه و مدیریت کنند.
 
 A lightweight, zero-dependency, client-side tool designed for string-by-string localization of **Android XML** and **JSON** files. It enables translators to easily manage project language assets locally without breaking nested or strict file structures.

@@ -1,5 +1,7 @@
 # 🌐 Local Translation Tool
 
+🌍 [Persian Version](README.md)
+
 A lightweight, zero-dependency, client-side tool designed for string-by-string localization of **Android XML** and **JSON** files. It enables translators to easily manage project language assets locally without breaking nested or strict file structures.
 
 🔗 **Live Version:** [https://mcuteangel.github.io/local_translation/](https://mcuteangel.github.io/local_translation/)
