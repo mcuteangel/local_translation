@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ابزار ترجمه محلی</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+  <style>
+    * { font-family: 'Vazirmatn', system-ui, sans-serif; }
+    textarea { resize: vertical; }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #f1f5f9; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-slate-100/50">
+  
+  <!-- Loading State -->
+  <div id="loading-state" class="min-h-screen flex flex-col items-center justify-center">
+    <div class="flex flex-col items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-emerald-600 flex items-center justify-center animate-pulse">
+        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+        </svg>
+      </div>
+      <p class="text-sm text-slate-500">در حال بارگذاری...</p>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app" class="hidden min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm">
+      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-emerald-600 flex items-center justify-center shadow-md">
+            <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-slate-900 leading-tight">ابزار ترجمه محلی</h1>
+            <p class="text-xs text-slate-500">ترجمه فایل‌های زبان پروژه‌های متن‌باز</p>
+          </div>
+        </div>
+        
+        <div class="hidden md:flex items-center gap-2 bg-gradient-to-l from-violet-50 to-purple-50 border border-violet-200 rounded-xl px-4 py-2">
+          <svg class="h-4 w-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+          </svg>
+          <span class="text-sm text-violet-700 font-medium">ترجمه هوشمند هوش مصنوعی</span>
+          <span class="text-xs text-violet-400">(به‌زودی)</span>
+        </div>
+
+        <div class="flex items-center gap-2" id="header-actions">
+          <div id="auto-save-badge" class="hidden sm:flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+            </svg>
+            <span>ذخیره خودکار</span>
+          </div>
+          <button id="upload-target-btn" class="hidden h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            بارگذاری مقصد
+          </button>
+          <button id="export-btn" class="hidden h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs text-white flex items-center gap-1.5">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            خروجی گرفتن
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col lg:flex-row max-w-screen-2xl mx-auto w-full">
+      <!-- Empty State -->
+      <div id="empty-state" class="flex-1 flex items-center justify-center p-6">
+        <div class="max-w-xl w-full space-y-6">
+          <div class="text-center space-y-3">
+            <div class="mx-auto h-20 w-20 rounded-2xl bg-emerald-100 flex items-center justify-center">
+              <svg class="h-10 w-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900">شروع ترجمه</h2>
+            <p class="text-slate-500 text-sm max-w-md mx-auto">
+              فایل JSON یا XML (Android strings.xml) مبدا را بارگذاری کنید تا کلیدهای ترجمه استخراج شوند. سپس می‌توانید فایل ترجمه موجود را نیز اضافه کنید.
+            </p>
+          </div>
+
+          <div class="space-y-4">
+            <label class="group relative flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-emerald-300 rounded-2xl bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-400 cursor-pointer transition-all duration-200">
+              <svg class="h-8 w-8 text-emerald-500 mb-3 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+              </svg>
+              <span class="text-base font-semibold text-emerald-700">بارگذاری فایل مبدا</span>
+              <span class="text-xs text-emerald-500 mt-1">فایل JSON یا XML (Android strings.xml) را انتخاب کنید</span>
+              <span class="text-xs text-slate-400 mt-2">الزامی</span>
+              <input type="file" id="source-file" accept=".json,.xml" class="hidden">
+            </label>
+
+            <label class="group relative flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50/50 hover:bg-slate-50 hover:border-slate-400 cursor-pointer transition-all duration-200">
+              <svg class="h-6 w-6 text-slate-400 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+              </svg>
+              <span class="text-sm font-medium text-slate-600">بارگذاری فایل مقصد - اختیاری</span>
+              <span class="text-xs text-slate-400 mt-1">فایل ترجمه موجود (JSON یا XML) را برای ادامه کار بارگذاری کنید</span>
+              <input type="file" id="target-file" accept=".json,.xml" class="hidden">
+            </label>
+          </div>
+
+          <div class="flex items-center justify-center gap-4 text-xs text-slate-400">
+            <div class="flex items-center gap-1.5">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <span>JSON</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+              </svg>
+              <span>Android XML</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+              </svg>
+              <span>Ctrl+Enter</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workspace (hidden initially) -->
+      <div id="workspace" class="hidden flex-1 flex flex-col lg:flex-row w-full">
+        <!-- Sidebar -->
+        <aside class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-l border-slate-200 bg-white lg:h-[calc(100vh-64px)] lg:sticky lg:top-16 overflow-y-auto scrollbar-thin">
+          <div class="p-4 space-y-5">
+            <!-- File Info -->
+            <div class="space-y-2">
+              <h3 class="text-sm font-bold text-slate-700">فایل‌های بارگذاری شده</h3>
+              <div id="file-info" class="space-y-2"></div>
+              <button id="change-source-btn" class="w-full flex items-center justify-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors">
+                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+                تغییر فایل مبدا
+              </button>
+            </div>
+
+            <div class="h-px bg-slate-200"></div>
+
+            <!-- Progress -->
+            <div class="space-y-3">
+              <h3 class="text-sm font-bold text-slate-700">پیشرفت ترجمه</h3>
+              <div class="h-3 bg-slate-200 rounded-full overflow-hidden">
+                <div id="progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+              </div>
+              <p id="progress-text" class="text-xs text-slate-500">۰ از ۰ رشته ترجمه شده است (۰٪)</p>
+              <div class="flex gap-3">
+                <div class="flex items-center gap-1.5 text-xs">
+                  <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <span class="text-slate-600">ترجمه شده: <span id="translated-count">۰</span></span>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs">
+                  <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+                  <span class="text-slate-600">ترجمه نشده: <span id="missing-count">۰</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="h-px bg-slate-200"></div>
+
+            <!-- Search -->
+            <div class="space-y-2">
+              <h3 class="text-sm font-bold text-slate-700">جستجو</h3>
+              <div class="relative">
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="search-input" placeholder="جستجو در کلیدها یا متن..." class="w-full pr-9 pl-8 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                <button id="clear-search" class="hidden absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="h-px bg-slate-200"></div>
+
+            <!-- Filter -->
+            <div class="space-y-2">
+              <h3 class="text-sm font-bold text-slate-700">فیلتر</h3>
+              <div class="flex flex-col gap-1.5" id="filter-buttons">
+                <button data-filter="all" class="filter-btn w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors bg-emerald-100 text-emerald-800 font-medium">
+                  <span class="h-3.5 w-3.5"></span>
+                  <span>همه</span>
+                  <span class="mr-auto text-xs px-1.5 py-0.5 rounded-full bg-emerald-200 text-emerald-700" id="filter-count-all">۰</span>
+                </button>
+                <button data-filter="missing" class="filter-btn w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-slate-600 hover:bg-slate-100">
+                  <svg class="h-3.5 w-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                  <span>ترجمه نشده</span>
+                  <span class="mr-auto text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500" id="filter-count-missing">۰</span>
+                </button>
+                <button data-filter="translated" class="filter-btn w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-slate-600 hover:bg-slate-100">
+                  <svg class="h-3.5 w-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span>ترجمه شده</span>
+                  <span class="mr-auto text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500" id="filter-count-translated">۰</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="h-px bg-slate-200"></div>
+
+            <!-- Shortcuts -->
+            <div class="space-y-2">
+              <h3 class="text-sm font-bold text-slate-700">میانبرهای صفحه‌کلید</h3>
+              <div class="space-y-1.5 text-xs text-slate-500">
+                <div class="flex items-center justify-between">
+                  <span>ذخیره و رفتن به بعدی</span>
+                  <kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[10px]">Ctrl+Enter</kbd>
+                </div>
+              </div>
+            </div>
+
+            <div class="h-px bg-slate-200"></div>
+
+            <!-- Auto-save & Clear -->
+            <div class="space-y-2">
+              <div class="flex items-center gap-1.5 text-xs text-emerald-600">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>ذخیره خودکار فعال</span>
+              </div>
+              <p class="text-[10px] text-slate-400 leading-relaxed">
+                داده‌های شما به‌طور خودکار در مرورگر ذخیره می‌شوند و با رفرش صفحه از بین نمی‌روند.
+              </p>
+              <button id="clear-workspace" class="w-full flex items-center justify-center gap-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors">
+                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                پاک کردن فضای کار
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <section class="flex-1 lg:h-[calc(100vh-64px)] overflow-y-auto scrollbar-thin">
+          <div class="p-4 sm:p-6 space-y-3">
+            <!-- Results count & page size -->
+            <div class="flex items-center justify-between text-xs text-slate-500 mb-4">
+              <span id="results-count">۰ رشته</span>
+              <div class="flex items-center gap-2">
+                <span id="filter-mode-text">نمایش همه</span>
+                <select id="page-size" class="hidden bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[11px] text-slate-600">
+                  <option value="25">۲۵ ردیف</option>
+                  <option value="50">۵۰ ردیف</option>
+                  <option value="100">۱۰۰ ردیف</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Empty results -->
+            <div id="no-results" class="hidden flex flex-col items-center justify-center py-20 text-center">
+              <svg class="h-12 w-12 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <p class="text-slate-500 font-medium">رشته‌ای یافت نشد</p>
+              <p class="text-slate-400 text-sm mt-1">فیلتر یا جستجوی خود را تغییر دهید</p>
+            </div>
+
+            <!-- Translation rows -->
+            <div id="translation-rows" class="space-y-3"></div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="hidden flex items-center justify-center gap-2 pt-4 pb-2">
+              <button id="prev-page" class="h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                قبلی
+              </button>
+              <div id="page-numbers" class="flex items-center gap-1"></div>
+              <button id="next-page" class="h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
+                بعدی
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+              <span id="page-info" class="text-[11px] text-slate-400 mr-2">صفحه ۱ از ۱</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white py-3 px-4 mt-auto">
+      <div class="max-w-screen-2xl mx-auto flex items-center justify-between text-xs text-slate-400">
+        <span>ابزار ترجمه محلی — پشتیبانی از JSON و XML (Android strings.xml)</span>
+        <span>ساخت شده با ❤️ برای جامعه فارسی‌زبان</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-4 left-4 z-50 space-y-2"></div>
+
+  <script>
+    // ===== Utility Functions =====
+    
+    // Convert to Persian numbers
+    function toPersianNumber(num) {
+      const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+      return String(num).replace(/\d/g, d => persianDigits[d]);
+    }
+
+    // Flatten nested JSON object
+    function flattenJSON(obj, prefix = '') {
+      const result = {};
+      for (const key in obj) {
+        const newKey = prefix ? `${prefix}.${key}` : key;
+        if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+          Object.assign(result, flattenJSON(obj[key], newKey));
+        } else {
+          result[newKey] = obj[key];
+        }
+      }
+      return result;
+    }
+
+    // Unflatten JSON object
+    function unflattenJSON(flat) {
+      const result = {};
+      for (const key in flat) {
+        const keys = key.split('.');
+        let current = result;
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (!current[keys[i]]) {
+            // Check if next key is numeric, create array
+            const nextKey = keys[i + 1];
+            current[keys[i]] = !isNaN(parseInt(nextKey)) ? [] : {};
+          }
+          current = current[keys[i]];
+        }
+        current[keys[keys.length - 1]] = flat[key];
+      }
+      return result;
+    }
+
+    // Detect file type
+    function detectFileType(filename) {
+      return filename.toLowerCase().endsWith('.xml') ? 'xml' : 'json';
+    }
+
+    // Check if content is XML
+    function isXMLContent(content) {
+      return content.trim().startsWith('<?xml') || content.trim().startsWith('<resources');
+    }
+
+    // Parse Android strings.xml
+    function parseXML(content) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(content, 'text/xml');
+      const resources = doc.querySelector('resources');
+      if (!resources) {
+        throw new Error('Invalid Android XML format');
+      }
+
+      const flat = {};
+      const metadata = [];
+
+      // Handle string elements
+      const strings = resources.querySelectorAll('string');
+      strings.forEach(str => {
+        const name = str.getAttribute('name');
+        let value = str.textContent || '';
+        
+        // Handle plurals
+        if (name.includes('[')) {
+          const match = name.match(/(.+)\[(.+)\]/);
+          if (match) {
+            const baseName = match[1];
+            const quantity = match[2];
+            if (!flat[baseName]) {
+              flat[baseName] = {};
+            }
+            flat[baseName][quantity] = value;
+          }
+        } else {
+          flat[name] = value;
+        }
+        
+        metadata.push({
+          name,
+          value,
+          type: 'string'
+        });
+      });
+
+      // Handle string-array elements
+      const arrays = resources.querySelectorAll('string-array');
+      arrays.forEach(arr => {
+        const name = arr.getAttribute('name');
+        const items = arr.querySelectorAll('item');
+        const values = Array.from(items).map(item => item.textContent || '');
+        flat[name] = values;
+        metadata.push({
+          name,
+          values,
+          type: 'array'
+        });
+      });
+
+      return { flat, metadata };
+    }
+
+    // Serialize to Android strings.xml format
+    function serializeXML(translations, metadata) {
+      let xml = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n';
+      
+      for (const key in translations) {
+        const value = translations[key];
+        
+        if (typeof value === 'object') {
+          // Handle plurals
+          xml += `    <plurals name="${key}">\n`;
+          for (const quantity in value) {
+            xml += `        <item quantity="${quantity}">${escapeXML(value[quantity])}</item>\n`;
+          }
+          xml += '    </plurals>\n';
+        } else if (Array.isArray(value)) {
+          // Handle arrays
+          xml += `    <string-array name="${key}">\n`;
+          value.forEach(item => {
+            xml += `        <item>${escapeXML(item)}</item>\n`;
+          });
+          xml += '    </string-array>\n';
+        } else {
+          xml += `    <string name="${key}">${escapeXML(value)}</string>\n`;
+        }
+      }
+      
+      xml += '</resources>';
+      return xml;
+    }
+
+    function escapeXML(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    }
+
+    // Extract special characters
+    function extractSpecialChars(text) {
+      const patterns = [
+        /%(\d\$)?[dDfFsScCboxXeEgGaAnNhHtT]/g,
+        /\{(\d+)\}/g,
+        /@@/g,
+      ];
+      const results = [];
+      for (const pattern of patterns) {
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          if (!results.includes(match[0])) {
+            results.push(match[0]);
+          }
+        }
+      }
+      return results;
+    }
+
+    // Generate page numbers with ellipsis
+    function generatePageNumbers(current, total) {
+      if (total <= 7) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+      }
+
+      const pages = [];
+      pages.push(1);
+
+      if (current > 3) {
+        pages.push('...');
+      }
+
+      const start = Math.max(2, current - 1);
+      const end = Math.min(total - 1, current + 1);
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (current < total - 2) {
+        pages.push('...');
+      }
+
+      pages.push(total);
+
+      return pages;
+    }
+
+    // ===== State Management =====
+    
+    const STORAGE_KEY = 'translation-tool-workspace';
+    
+    let state = {
+      sourceKeys: {},
+      targetTranslations: {},
+      sourceFileName: '',
+      targetFileName: '',
+      sourceFileType: 'json',
+      xmlMetadata: [],
+      filterMode: 'all',
+      currentPage: 1,
+      pageSize: 25,
+      searchQuery: ''
+    };
+
+    let copiedKey = null;
+    let copiedToTranslationKey = null;
+    let textareaRefs = new Map();
+
+    // Load from localStorage
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          state = { ...state, ...saved };
+        }
+      } catch (e) {
+        console.error('Failed to load from storage:', e);
+      }
+    }
+
+    // Save to localStorage
+    function saveToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.error('Failed to save to storage:', e);
+      }
+    }
+
+    // ===== UI Functions =====
+
+    function showToast(title, description, variant = 'default') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const bgColor = variant === 'destructive' ? 'bg-red-500' : 'bg-slate-800';
+      
+      toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg max-w-sm`;
+      toast.innerHTML = `
+        <div class="font-medium text-sm">${title}</div>
+        ${description ? `<div class="text-xs opacity-90 mt-1">${description}</div>` : ''}
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    function calculateProgress() {
+      const total = Object.keys(state.sourceKeys).length;
+      const translated = Object.keys(state.targetTranslations).filter(
+        k => state.targetTranslations[k] && state.targetTranslations[k].trim() !== ''
+      ).length;
+      const missing = total - translated;
+      const percentage = total > 0 ? Math.round((translated / total) * 100) : 0;
+      
+      return { total, translated, missing, percentage };
+    }
+
+    function getFilteredEntries() {
+      return Object.keys(state.sourceKeys)
+        .map(key => ({
+          key,
+          sourceValue: state.sourceKeys[key],
+          targetValue: state.targetTranslations[key] || '',
+          isTranslated: !!state.targetTranslations[key] && (
+            typeof state.targetTranslations[key] === 'string'
+              ? state.targetTranslations[key].trim() !== ''
+              : Array.isArray(state.targetTranslations[key]) && state.targetTranslations[key].length > 0
+          )
+        }))
+        .filter(entry => {
+          // Filter mode
+          if (state.filterMode === 'missing' && entry.isTranslated) return false;
+          if (state.filterMode === 'translated' && !entry.isTranslated) return false;
+          
+          // Search filter
+          if (state.searchQuery) {
+            const q = state.searchQuery.toLowerCase();
+            const sourceStr = typeof entry.sourceValue === 'string' ? entry.sourceValue : JSON.stringify(entry.sourceValue);
+            const targetStr = typeof entry.targetValue === 'string' ? entry.targetValue : JSON.stringify(entry.targetValue);
+            return (
+              entry.key.toLowerCase().includes(q) ||
+              sourceStr.toLowerCase().includes(q) ||
+              targetStr.toLowerCase().includes(q)
+            );
+          }
+          
+          return true;
+        });
+    }
+
+    function updateUI() {
+      const hasSourceFile = Object.keys(state.sourceKeys).length > 0;
+      
+      // Show/hide empty state vs workspace
+      document.getElementById('empty-state').classList.toggle('hidden', hasSourceFile);
+      document.getElementById('workspace').classList.toggle('hidden', !hasSourceFile);
+      
+      // Update header actions visibility
+      const headerActions = document.getElementById('header-actions');
+      const autoSaveBadge = document.getElementById('auto-save-badge');
+      const uploadTargetBtn = document.getElementById('upload-target-btn');
+      const exportBtn = document.getElementById('export-btn');
+      
+      if (hasSourceFile) {
+        autoSaveBadge?.classList.remove('hidden');
+        uploadTargetBtn?.classList.remove('hidden');
+        exportBtn?.classList.remove('hidden');
+      } else {
+        autoSaveBadge?.classList.add('hidden');
+        uploadTargetBtn?.classList.add('hidden');
+        exportBtn?.classList.add('hidden');
+      }
+      
+      if (!hasSourceFile) return;
+      
+      // Update file info
+      const fileInfo = document.getElementById('file-info');
+      fileInfo.innerHTML = '';
+      
+      if (state.sourceFileName) {
+        const icon = state.sourceFileType === 'xml' 
+          ? '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>'
+          : '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+        
+        fileInfo.innerHTML += `
+          <div class="flex items-center gap-2 text-xs bg-emerald-50 text-emerald-700 rounded-lg px-3 py-2">
+            ${icon}
+            <span class="font-medium truncate">${state.sourceFileName}</span>
+            <span class="mr-auto text-[9px] px-1.5 py-0 rounded border border-emerald-300 text-emerald-600">${state.sourceFileType.toUpperCase()}</span>
+          </div>
+        `;
+      }
+      
+      if (state.targetFileName) {
+        fileInfo.innerHTML += `
+          <div class="flex items-center gap-2 text-xs bg-blue-50 text-blue-700 rounded-lg px-3 py-2">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span class="font-medium truncate">${state.targetFileName}</span>
+            <span class="mr-auto text-blue-500">مقصد</span>
+          </div>
+        `;
+      }
+      
+      // Update progress
+      const progress = calculateProgress();
+      document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
+      document.getElementById('progress-text').textContent = 
+        `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
+      document.getElementById('translated-count').textContent = toPersianNumber(progress.translated);
+      document.getElementById('missing-count').textContent = toPersianNumber(progress.missing);
+      
+      // Update filter counts
+      document.getElementById('filter-count-all').textContent = toPersianNumber(Object.keys(state.sourceKeys).length);
+      document.getElementById('filter-count-missing').textContent = toPersianNumber(progress.missing);
+      document.getElementById('filter-count-translated').textContent = toPersianNumber(progress.translated);
+      
+      // Update filter buttons
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        const filter = btn.dataset.filter;
+        const isActive = filter === state.filterMode;
+        btn.className = `filter-btn w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+          isActive ? 'bg-emerald-100 text-emerald-800 font-medium' : 'text-slate-600 hover:bg-slate-100'
+        }`;
+      });
+      
+      // Update filter mode text
+      const filterModeText = {
+        'all': 'نمایش همه',
+        'missing': 'فقط ترجمه نشده',
+        'translated': 'فقط ترجمه شده'
+      };
+      document.getElementById('filter-mode-text').textContent = filterModeText[state.filterMode];
+      
+      // Get filtered entries
+      const allFilteredEntries = getFilteredEntries();
+      
+      // Update results count
+      document.getElementById('results-count').textContent = 
+        `${toPersianNumber(allFilteredEntries.length)} رشته${state.searchQuery ? ` برای "${state.searchQuery}"` : ''}`;
+      
+      // Show/hide page size selector
+      document.getElementById('page-size').classList.toggle('hidden', allFilteredEntries.length <= 25);
+      document.getElementById('page-size').value = state.pageSize;
+      
+      // Show/hide no results
+      document.getElementById('no-results').classList.toggle('hidden', allFilteredEntries.length > 0);
+      
+      // Render translation rows
+      const totalPages = Math.max(1, Math.ceil(allFilteredEntries.length / state.pageSize));
+      const safeCurrentPage = Math.min(state.currentPage, totalPages);
+      const start = (safeCurrentPage - 1) * state.pageSize;
+      const paginatedEntries = allFilteredEntries.slice(start, start + state.pageSize);
+      
+      const rowsContainer = document.getElementById('translation-rows');
+      rowsContainer.innerHTML = '';
+      
+      paginatedEntries.forEach(entry => {
+        rowsContainer.appendChild(createTranslationRow(entry));
+      });
+      
+      // Update pagination
+      const pagination = document.getElementById('pagination');
+      if (totalPages > 1) {
+        pagination.classList.remove('hidden');
+        
+        document.getElementById('prev-page').disabled = safeCurrentPage <= 1;
+        document.getElementById('next-page').disabled = safeCurrentPage >= totalPages;
+        document.getElementById('page-info').textContent = 
+          `صفحه ${toPersianNumber(safeCurrentPage)} از ${toPersianNumber(totalPages)}`;
+        
+        const pageNumbers = document.getElementById('page-numbers');
+        pageNumbers.innerHTML = '';
+        
+        generatePageNumbers(safeCurrentPage, totalPages).forEach(page => {
+          if (page === '...') {
+            pageNumbers.innerHTML += '<span class="px-1 text-slate-400 text-xs">...</span>';
+          } else {
+            const isActive = page === safeCurrentPage;
+            pageNumbers.innerHTML += `
+              <button class="page-btn h-8 min-w-[2rem] rounded-md text-xs font-medium transition-colors ${
+                isActive ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }" data-page="${page}">${toPersianNumber(page)}</button>
+            `;
+          }
+        });
+      } else {
+        pagination.classList.add('hidden');
+      }
+      
+      // Save to storage
+      saveToStorage();
+    }
+
+    function createTranslationRow(entry) {
+      const div = document.createElement('div');
+      const isPlural = entry.key.includes('[');
+      
+      let keyDisplay;
+      if (isPlural) {
+        const parts = entry.key.split('[');
+        const match = entry.key.match(/\[(.+?)\]/);
+        keyDisplay = `
+          <span class="text-violet-600">${parts[0]}</span>
+          <span class="text-slate-400">[</span>
+          <span class="text-amber-600">${match ? match[1] : ''}</span>
+          <span class="text-slate-400">]</span>
+        `;
+      } else {
+        keyDisplay = entry.key;
+      }
+      
+      // Handle array values for display
+      const sourceDisplay = Array.isArray(entry.sourceValue) 
+        ? entry.sourceValue.map((v, i) => `<div class="py-0.5 border-b border-slate-100 last:border-0">[${i}] ${v}</div>`).join('')
+        : entry.sourceValue;
+      
+      const specialChars = Array.isArray(entry.sourceValue) ? [] : extractSpecialChars(entry.sourceValue);
+      
+      div.className = `rounded-lg border transition-all duration-200 ${
+        entry.isTranslated ? 'border-emerald-200 bg-white' : 'border-amber-200 bg-amber-50/30'
+      }`;
+      
+      div.innerHTML = `
+        <div class="flex items-center gap-2 px-3 py-1.5 border-b border-slate-100">
+          <code dir="ltr" class="text-[11px] text-slate-500 font-mono flex-1 truncate text-left">${keyDisplay}</code>
+          ${Array.isArray(entry.sourceValue) ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">آرایه</span>' : ''}
+          <div class="flex items-center gap-1">
+            <button class="copy-source-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors" title="کپی متن مبدا">
+              ${copiedKey === entry.key 
+                ? '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+                : '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>'
+              }
+            </button>
+            ${!Array.isArray(entry.sourceValue) ? `
+            <button class="copy-to-translation-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-emerald-600 transition-colors" title="کپی متن مبدا به ترجمه">
+              ${copiedToTranslationKey === entry.key
+                ? '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+                : '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>'
+              }
+            </button>
+            ` : ''}
+          </div>
+          <span class="text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+            entry.isTranslated ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+          }">${entry.isTranslated ? 'ترجمه شده' : 'ترجمه نشده'}</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-0">
+          <div class="px-3 py-2 border-b sm:border-b-0 sm:border-l border-slate-100">
+            <div dir="ltr" class="bg-slate-50 border border-slate-150 rounded px-2.5 py-1.5 text-sm text-slate-700 min-h-[2rem] max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-left">
+              ${sourceDisplay || '<span class="text-slate-400 italic">خالی</span>'}
+            </div>
+            ${specialChars.length > 0 ? `
+              <div class="flex flex-wrap gap-1 mt-1.5">
+                ${specialChars.map(char => `
+                  <button class="special-char-btn dir-ltr inline-flex items-center px-1.5 py-0.5 text-[11px] font-mono bg-violet-50 text-violet-700 border border-violet-200 rounded hover:bg-violet-100 hover:border-violet-300 transition-colors cursor-pointer" title="درج ${char} در محل نشانگر">${char}</button>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+          <div class="px-3 py-2">
+            ${Array.isArray(entry.sourceValue) 
+              ? `<div class="text-sm text-slate-500 italic bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">آرایه‌ها در این نسخه فقط خواندنی هستند. برای ویرایش، فایل XML را مستقیماً ویرایش کنید.</div>`
+              : `<textarea 
+                  data-key="${CSS.escape(entry.key)}"
+                  class="translation-input w-full text-sm min-h-[2.5rem] resize-y leading-relaxed border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  placeholder="ترجمه..."
+                  dir="auto"
+                >${entry.targetValue}</textarea>`
+            }
+          </div>
+        </div>
+      `;
+      
+      // Event listeners
+      const copySourceBtn = div.querySelector('.copy-source-btn');
+      copySourceBtn.addEventListener('click', () => {
+        const textToCopy = Array.isArray(entry.sourceValue) ? JSON.stringify(entry.sourceValue, null, 2) : entry.sourceValue;
+        navigator.clipboard.writeText(textToCopy);
+        copiedKey = entry.key;
+        setTimeout(() => copiedKey = null, 1500);
+        updateUI();
+      });
+      
+      const copyToTranslationBtn = div.querySelector('.copy-to-translation-btn');
+      copyToTranslationBtn.addEventListener('click', () => {
+        state.targetTranslations[entry.key] = entry.sourceValue;
+        copiedToTranslationKey = entry.key;
+        setTimeout(() => copiedToTranslationKey = null, 1500);
+        updateUI();
+      });
+      
+      const textarea = div.querySelector('.translation-input');
+      textarea.addEventListener('input', (e) => {
+        state.targetTranslations[entry.key] = e.target.value;
+        saveToStorage();
+        // Update progress without full re-render
+        const progress = calculateProgress();
+        document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
+        document.getElementById('progress-text').textContent = 
+          `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
+        document.getElementById('translated-count').textContent = toPersianNumber(progress.translated);
+        document.getElementById('missing-count').textContent = toPersianNumber(progress.missing);
+        document.getElementById('filter-count-translated').textContent = toPersianNumber(progress.translated);
+        document.getElementById('filter-count-missing').textContent = toPersianNumber(progress.missing);
+      });
+      
+      textarea.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          const allFilteredEntries = getFilteredEntries();
+          const currentIndex = allFilteredEntries.findIndex(ent => ent.key === entry.key);
+          const nextMissing = allFilteredEntries.find((ent, idx) => idx > currentIndex && !ent.isTranslated);
+          
+          if (nextMissing) {
+            const nextIndex = allFilteredEntries.indexOf(nextMissing);
+            const nextPage = Math.floor(nextIndex / state.pageSize) + 1;
+            state.currentPage = nextPage;
+            updateUI();
+            
+            requestAnimationFrame(() => {
+              const nextTextarea = document.querySelector(`textarea[data-key="${CSS.escape(nextMissing.key)}"]`);
+              if (nextTextarea) {
+                nextTextarea.focus();
+                nextTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            });
+          } else {
+            showToast('🎉 تمام رشته‌ها ترجمه شده‌اند!', 'هیچ رشته ترجمه نشده‌ای باقی نمانده است');
+          }
+        }
+      });
+      
+      // پیدا کردن و فعال‌سازی دکمه‌های کاراکتر خاص
+      const specialCharButtons = div.querySelectorAll('.special-char-btn');
+      specialCharButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const char = btn.textContent;
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const currentValue = textarea.value;
+          const newValue = currentValue.slice(0, start) + char + currentValue.slice(end);
+          
+          state.targetTranslations[entry.key] = newValue;
+          textarea.value = newValue;
+          
+          // به‌روزرسانی شمارنده‌ها بدون رندر مجدد کل صفحه
+          const progress = calculateProgress();
+          document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
+          document.getElementById('progress-text').textContent = 
+            `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
+          
+          requestAnimationFrame(() => {
+            textarea.selectionStart = textarea.selectionEnd = start + char.length;
+            textarea.focus();
+          });
+        });
+      });
+      
+      return div;
+    }
+
+    // ===== Event Handlers =====
+
+    function handleSourceFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        let flat, fileType, metadata = [];
+        try {
+          const content = event.target.result;
+          
+          if (detectFileType(file.name) === 'xml' || isXMLContent(content)) {
+            const result = parseXML(content);
+            flat = result.flat;
+            fileType = 'xml';
+            metadata = result.metadata;
+          } else {
+            const json = JSON.parse(content);
+            flat = flattenJSON(json);
+            fileType = 'json';
+          }
+          
+          state.sourceKeys = flat;
+          state.sourceFileName = file.name;
+          state.sourceFileType = fileType;
+          state.xmlMetadata = metadata;
+          state.currentPage = 1;
+          
+          showToast('فایل مبدا بارگذاری شد', `${toPersianNumber(Object.keys(flat).length)} کلید یافت شد${fileType === 'xml' ? ' (فایل XML)' : ''}`);
+        } catch (err) {
+          console.error(err);
+          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON یا XML (Android strings.xml) بارگذاری کنید', 'destructive');
+          return;
+        }
+        
+        // اجرای آپدیت UI خارج از بلوک try/catch فایل
+        try {
+          updateUI();
+        } catch (uiErr) {
+          console.error("UI Render Error: ", uiErr);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function handleTargetFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const content = event.target.result;
+          let flat;
+          
+          if (detectFileType(file.name) === 'xml' || isXMLContent(content)) {
+            const result = parseXML(content);
+            flat = result.flat;
+          } else {
+            const json = JSON.parse(content);
+            flat = flattenJSON(json);
+          }
+          
+          state.targetTranslations = { ...state.targetTranslations, ...flat };
+          state.targetFileName = file.name;
+          
+          const matched = Object.keys(flat).filter(k => k in state.sourceKeys).length;
+          showToast('فایل مقصد بارگذاری شد', `${toPersianNumber(matched)} کلید مطابقت داشت از ${toPersianNumber(Object.keys(flat).length)} کلید`);
+          updateUI();
+        } catch (err) {
+          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON یا XML (Android strings.xml) بارگذاری کنید', 'destructive');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function handleExport() {
+      let content, mimeType, defaultFileName;
+      
+      if (state.sourceFileType === 'xml') {
+        const finalTranslations = {};
+        for (const key in state.sourceKeys) {
+          if (Array.isArray(state.sourceKeys[key])) {
+            // آرایه‌ها را همیشه نگه می‌داریم تا ساختار فایل به هم نریزد
+            finalTranslations[key] = state.targetTranslations[key] || state.sourceKeys[key];
+          } else if (state.targetTranslations[key] && state.targetTranslations[key].trim() !== '') {
+            // فقط و فقط اگر کلید ترجمه شده بود، آن را به فایل مقصد اضافه کن
+            finalTranslations[key] = state.targetTranslations[key];
+          }
+          // اگر ترجمه نشده باشد، کلاً به شیء نهایی اضافه نمی‌شود -> در نتیجه اندروید به زبان اصلی Fallback می‌کند
+        }
+        
+        content = serializeXML(finalTranslations, state.xmlMetadata);
+        mimeType = 'application/xml';
+        defaultFileName = state.targetFileName || 'fa.xml';
+      } else {
+        // برای فایل‌های JSON
+        const finalJsonTranslations = {};
+        for (const key in state.sourceKeys) {
+          if (state.targetTranslations[key] && state.targetTranslations[key].trim() !== '') {
+            // فقط کلیدهای ترجمه شده را نگه دار
+            finalJsonTranslations[key] = state.targetTranslations[key];
+          }
+        }
+        
+        // تبدیل کلیدهای فلت به ساختار درختی (فقط برای کلیدهای ترجمه شده)
+        const nested = unflattenJSON(finalJsonTranslations);
+        content = JSON.stringify(nested, null, 2);
+        mimeType = 'application/json';
+        defaultFileName = state.targetFileName || 'fa.json';
+      }
+      
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = defaultFileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      const progress = calculateProgress();
+      showToast('فایل ترجمه خروجی گرفته شد', `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده`);
+    }
+
+    function clearWorkspace() {
+      state = {
+        sourceKeys: {},
+        targetTranslations: {},
+        sourceFileName: '',
+        targetFileName: '',
+        sourceFileType: 'json',
+        xmlMetadata: [],
+        filterMode: 'all',
+        currentPage: 1,
+        pageSize: 25,
+        searchQuery: ''
+      };
+      localStorage.removeItem(STORAGE_KEY);
+      showToast('فضای کار پاک شد', 'تمام داده‌های ذخیره‌شده حذف شد');
+      updateUI();
+    }
+
+    // ===== Initialize =====
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load from storage FIRST
+      loadFromStorage();
+      
+      // Hide loading state
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      
+      // Set up event listeners
+      document.getElementById('source-file').addEventListener('change', handleSourceFile);
+      document.getElementById('target-file').addEventListener('change', handleTargetFile);
+      
+      document.getElementById('change-source-btn').addEventListener('click', () => {
+        document.getElementById('source-file').click();
+      });
+      
+      document.getElementById('upload-target-btn').addEventListener('click', () => {
+        document.getElementById('target-file').click();
+      });
+      
+      document.getElementById('export-btn').addEventListener('click', handleExport);
+      
+      document.getElementById('search-input').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        state.currentPage = 1;
+        document.getElementById('clear-search').classList.toggle('hidden', !e.target.value);
+        updateUI();
+      });
+      
+      document.getElementById('clear-search').addEventListener('click', () => {
+        state.searchQuery = '';
+        document.getElementById('search-input').value = '';
+        document.getElementById('clear-search').classList.add('hidden');
+        state.currentPage = 1;
+        updateUI();
+      });
+      
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.filterMode = btn.dataset.filter;
+          state.currentPage = 1;
+          updateUI();
+        });
+      });
+      
+      document.getElementById('page-size').addEventListener('change', (e) => {
+        state.pageSize = parseInt(e.target.value);
+        state.currentPage = 1;
+        updateUI();
+      });
+      
+      document.getElementById('prev-page').addEventListener('click', () => {
+        if (state.currentPage > 1) {
+          state.currentPage--;
+          updateUI();
+        }
+      });
+      
+      document.getElementById('next-page').addEventListener('click', () => {
+        const allFilteredEntries = getFilteredEntries();
+        const totalPages = Math.ceil(allFilteredEntries.length / state.pageSize);
+        if (state.currentPage < totalPages) {
+          state.currentPage++;
+          updateUI();
+        }
+      });
+      
+      document.getElementById('pagination').addEventListener('click', (e) => {
+        if (e.target.classList.contains('page-btn')) {
+          state.currentPage = parseInt(e.target.dataset.page);
+          updateUI();
+        }
+      });
+      
+      document.getElementById('clear-workspace').addEventListener('click', clearWorkspace);
+      
+      // Initial UI update
+      updateUI();
+    });
+  </script>
+</body>
+</html>
