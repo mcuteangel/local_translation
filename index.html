@@ -225,24 +225,9 @@
               <h3 class="text-sm font-bold text-slate-700">زبان‌های مقصد</h3>
               <div id="language-tabs" class="flex flex-wrap gap-1.5"></div>
               <div class="flex gap-1.5">
-                <select id="add-language-select" class="flex-1 text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white">
-                  <option value="">افزودن زبان جدید...</option>
-                  <option value="fa">🇮🇷 فارسی</option>
-                  <option value="en">🇬🇧 English</option>
-                  <option value="ar">🇸🇦 العربية</option>
-                  <option value="de">🇩🇪 Deutsch</option>
-                  <option value="fr">🇫🇷 Français</option>
-                  <option value="es">🇪🇸 Español</option>
-                  <option value="ru">🇷🇺 Русский</option>
-                  <option value="zh">🇨🇳 中文</option>
-                  <option value="ja">🇯🇵 日本語</option>
-                  <option value="ko">🇰🇷 한국어</option>
-                  <option value="tr">🇹🇷 Türkçe</option>
-                  <option value="ur">🇵🇰 اردو</option>
-                  <option value="hi">🇮🇳 हिन्दी</option>
-                  <option value="pt">🇧🇷 Português</option>
-                  <option value="it">🇮🇹 Italiano</option>
-                </select>
+<select id="add-language-select" class="flex-1 text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white">
+                   <option value="">افزودن زبان جدید...</option>
+                 </select>
                 <button id="add-language-btn" class="px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs">
                   +
                 </button>
@@ -587,21 +572,53 @@
   <script>
     // ===== Utility Functions =====
     
+    // Debounce utility for performance optimization
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
     // Convert to Persian numbers
     function toPersianNumber(num) {
       const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
       return String(num).replace(/\d/g, d => persianDigits[d]);
     }
 
-    // Flatten nested JSON object
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      if (text === null || text === undefined) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Flatten nested JSON object using iterative stack approach for performance
     function flattenJSON(obj, prefix = '') {
       const result = {};
-      for (const key in obj) {
-        const newKey = prefix ? `${prefix}.${key}` : key;
-        if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-          Object.assign(result, flattenJSON(obj[key], newKey));
-        } else {
-          result[newKey] = obj[key];
+      const stack = [{ obj, prefix }];
+      
+      while (stack.length > 0) {
+        const current = stack.pop();
+        for (const key in current.obj) {
+          if (Object.prototype.hasOwnProperty.call(current.obj, key)) {
+            const newKey = current.prefix ? `${current.prefix}.${key}` : key;
+            const value = current.obj[key];
+            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+              stack.push({ obj: value, prefix: newKey });
+            } else {
+              result[newKey] = value;
+            }
+          }
         }
       }
       return result;
@@ -940,43 +957,74 @@
       return { flat, metadata: [] };
     }
 
-    // Parse PO (gettext) content
+    // Parse PO (gettext) content with support for multi-line messages and plurals
     function parsePO(content) {
       const flat = {};
+      const metadata = [];
       const lines = content.split('\n');
-      let currentMsgid = '';
-      let currentMsgstr = '';
-      let inMsgid = false;
-      let inMsgstr = false;
-      
-      for (const line of lines) {
+      let i = 0;
+      while (i < lines.length) {
+        const line = lines[i];
         const trimmed = line.trim();
-        if (trimmed.startsWith('msgid ')) {
-          if (currentMsgid && currentMsgstr) {
-            flat[currentMsgid] = currentMsgstr;
-          }
-          const match = trimmed.match(/^msgid\s+"(.+)"$/);
-          currentMsgid = match ? match[1] : '';
-          currentMsgstr = '';
-          inMsgid = true;
-          inMsgstr = false;
-        } else if (trimmed.startsWith('msgstr ')) {
-          const match = trimmed.match(/^msgstr\s+"(.+)"$/);
-          currentMsgstr = match ? match[1] : '';
-          inMsgid = false;
-          inMsgstr = true;
-        } else if (inMsgid && trimmed.startsWith('"')) {
-          const match = trimmed.match(/^"(.+)"$/);
-          if (match) currentMsgid += match[1];
-        } else if (inMsgstr && trimmed.startsWith('"')) {
-          const match = trimmed.match(/^"(.+)"$/);
-          if (match) currentMsgstr += match[1];
+        
+        // Skip empty lines and comments
+        if (!trimmed || trimmed.startsWith('#')) {
+          i++;
+          continue;
         }
+        
+        // Handle msgid
+        if (trimmed.startsWith('msgid ')) {
+          let msgid = '';
+          let msgstr = '';
+          
+          // Extract msgid (can be multi-line)
+          const msgidMatch = trimmed.match(/^msgid\s+"(.*)"$/);
+          if (msgidMatch) {
+            msgid = msgidMatch[1];
+            // Continue reading lines that start with quote
+            i++;
+            while (i < lines.length && lines[i].trim().startsWith('"')) {
+              const continuationMatch = lines[i].trim().match(/^"(.*)"$/);
+              if (continuationMatch) {
+                msgid += continuationMatch[1];
+              }
+              i++;
+            }
+          } else {
+            // Malformed, skip line
+            i++;
+            continue;
+          }
+          
+          // Look for msgstr (can be multi-line)
+          while (i < lines.length && !lines[i].trim().startsWith('msgstr ')) {
+            i++;
+          }
+          if (i < lines.length) {
+            const msgstrLine = lines[i];
+            const msgstrMatch = msgstrLine.trim().match(/^msgstr\s+"(.*)"$/);
+            if (msgstrMatch) {
+              msgstr = msgstrMatch[1];
+              i++;
+              while (i < lines.length && lines[i].trim().startsWith('"')) {
+                const continuationMatch = lines[i].trim().match(/^"(.*)"$/);
+                if (continuationMatch) {
+                  msgstr += continuationMatch[1];
+                }
+                i++;
+              }
+            }
+          }
+          
+          flat[msgid] = msgstr;
+          metadata.push({ msgid, msgstr });
+          continue;
+        }
+        
+        i++;
       }
-      if (currentMsgid && currentMsgstr) {
-        flat[currentMsgid] = currentMsgstr;
-      }
-      return { flat, metadata: [] };
+      return { flat, metadata };
     }
 
     // Serialize to CSV format
@@ -1029,8 +1077,11 @@
       for (const key in translations) {
         const value = translations[key];
         if (value !== undefined && value !== null) {
-          po += `msgid "${key}"\n`;
-          po += `msgstr "${String(value).replace(/"/g, '\\"')}"\n\n`;
+          // Escape special chars for PO format
+          const escapedKey = key.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          const escapedValue = String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          po += `msgid "${escapedKey}"\n`;
+          po += `msgstr "${escapedValue}"\n\n`;
         }
       }
       return po;
@@ -1047,16 +1098,33 @@
         enabled: true
       },
 
-      loadConfig() {
-        try {
-          const saved = localStorage.getItem('translation-api-config');
-          if (saved) this.config = { ...this.config, ...JSON.parse(saved) };
-        } catch (e) { /* ignore */ }
-      },
+loadConfig() {
+         try {
+           const saved = localStorage.getItem('translation-api-config');
+           if (saved) {
+             // Try to decrypt first
+             const decrypted = EncryptionModule.decrypt ? EncryptionModule.decrypt(saved) : null;
+             const data = decrypted || JSON.parse(saved);
+             this.config = { ...this.config, ...data };
+           }
+         } catch (e) { /* ignore */ }
+       },
 
-      saveConfig() {
-        localStorage.setItem('translation-api-config', JSON.stringify(this.config));
-      },
+saveConfig() {
+         // Encrypt API keys before storage if encryption is enabled
+         if (EncryptionModule.enabled && EncryptionModule.key) {
+           const encryptedData = EncryptionModule.encrypt(JSON.stringify({
+             googleApiKey: this.config.googleApiKey,
+             deeplApiKey: this.config.deeplApiKey,
+             deeplIsPro: this.config.deeplIsPro,
+             preferredService: this.config.preferredService,
+             enabled: this.config.enabled
+           }));
+           localStorage.setItem('translation-api-config', encryptedData);
+         } else {
+           localStorage.setItem('translation-api-config', JSON.stringify(this.config));
+         }
+       },
 
       async translate(text, targetLang, sourceLang = 'auto') {
         if (!text || typeof text !== 'string') return text;
@@ -1426,14 +1494,41 @@
       }
     }
 
-    // ===== Multi-Language Support =====
-    
+// ===== Multi-Language Support =====
+     
+    const SUPPORTED_LOCALES = {
+      fa: { name: 'فارسی', flag: '🇮🇷' },
+      en: { name: 'English', flag: '🇬🇧' },
+      ar: { name: 'العربية', flag: '🇸🇦' },
+      de: { name: 'Deutsch', flag: '🇩🇪' },
+      fr: { name: 'Français', flag: '🇫🇷' },
+      es: { name: 'Español', flag: '🇪🇸' },
+      ru: { name: 'Русский', flag: '🇷🇺' },
+      zh: { name: '中文', flag: '🇨🇳' },
+      ja: { name: '日本語', flag: '🇯🇵' },
+      ko: { name: '한국어', flag: '🇰🇷' },
+      tr: { name: 'Türkçe', flag: '🇹🇷' },
+      ur: { name: 'اردو', flag: '🇵🇰' },
+      hi: { name: 'हिन्दी', flag: '🇮🇳' },
+      pt: { name: 'Português', flag: '🇧🇷' },
+      it: { name: 'Italiano', flag: '🇮🇹' }
+    };
+
     let targetLanguages = {
       current: 'fa',
       languages: {
         'fa': { name: 'فارسی', flag: '🇮🇷', translations: {} }
       }
     };
+
+    function initializeLanguageDropdown() {
+      const select = document.getElementById('add-language-select');
+      select.innerHTML = '<option value="">افزودن زبان جدید...</option>';
+      Object.entries(SUPPORTED_LOCALES).forEach(([code, locale]) => {
+        const option = new Option(`${locale.flag} ${locale.name}`, code);
+        select.add(option);
+      });
+    }
 
     function addTargetLanguage(code, name, flag = '') {
       if (targetLanguages.languages[code]) return;
@@ -1968,24 +2063,29 @@
       const div = document.createElement('div');
       const isPlural = entry.key.includes('[');
       
+      // Escape all user-provided content to prevent XSS
+      const safeSourceValue = escapeHtml(entry.sourceValue);
+      const safeTargetValue = escapeHtml(entry.targetValue);
+      const safeKey = escapeHtml(entry.key);
+      
       let keyDisplay;
       if (isPlural) {
         const parts = entry.key.split('[');
         const match = entry.key.match(/\[(.+?)\]/);
         keyDisplay = `
-          <span class="text-violet-600">${parts[0]}</span>
+          <span class="text-violet-600">${escapeHtml(parts[0])}</span>
           <span class="text-slate-400">[</span>
-          <span class="text-amber-600">${match ? match[1] : ''}</span>
+          <span class="text-amber-600">${escapeHtml(match ? match[1] : '')}</span>
           <span class="text-slate-400">]</span>
         `;
       } else {
-        keyDisplay = entry.key;
+        keyDisplay = safeKey;
       }
       
-      // Handle array values for display
+      // Handle array values for display with escaping
       const sourceDisplay = Array.isArray(entry.sourceValue) 
-        ? entry.sourceValue.map((v, i) => `<div class="py-0.5 border-b border-slate-100 last:border-0">[${i}] ${v}</div>`).join('')
-        : entry.sourceValue;
+        ? entry.sourceValue.map((v, i) => `<div class="py-0.5 border-b border-slate-100 last:border-0">[${escapeHtml(i)}]<span dir="ltr"> ${escapeHtml(v)}</span></div>`).join('')
+        : safeSourceValue;
       
       const specialChars = Array.isArray(entry.sourceValue) ? [] : extractSpecialChars(entry.sourceValue);
       
@@ -2029,17 +2129,17 @@
                 `).join('')}
               </div>
             ` : ''}
-          </div>
-          <div class="px-3 py-2">
-            ${Array.isArray(entry.sourceValue) 
-              ? `<div class="text-sm text-slate-500 italic bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">آرایه‌ها در این نسخه فقط خواندنی هستند. برای ویرایش، فایل XML را مستقیماً ویرایش کنید.</div>`
-              : `<textarea 
-                  data-key="${CSS.escape(entry.key)}"
-                  class="translation-input w-full text-sm min-h-[2.5rem] resize-y leading-relaxed border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="ترجمه..."
-                  dir="auto"
-                >${entry.targetValue}</textarea>`
-            }
+</div>
+           <div class="px-3 py-2">
+             ${Array.isArray(entry.sourceValue) 
+               ? `<div class="text-sm text-slate-500 italic bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">آرایه‌ها در این نسخه فقط خوانده‌شده‌اند. برای ویرایش، فایل XML را مستقیماً ویرایش کنید.</div>`
+               : `<textarea 
+                   data-key="${CSS.escape(entry.key)}"
+                   class="translation-input w-full text-sm min-h-[2.5rem] resize-y leading-relaxed border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                   placeholder="ترجمه..."
+                   dir="auto"
+                 >${safeTargetValue}</textarea>`
+             }
           </div>
         </div>
       `;
@@ -2203,6 +2303,8 @@
           state.targetTranslations = { ...state.targetTranslations, ...flat };
           state.targetFileName = file.name;
           state.targetFileType = targetFileType;
+          // Reset file input to allow re-selecting the same file
+          e.target.value = '';
           
           const matched = Object.keys(flat).filter(k => k in state.sourceKeys).length;
           showToast('فایل مقصد بارگذاری شد', `${toPersianNumber(matched)} کلید مطابقت داشت از ${toPersianNumber(Object.keys(flat).length)} کلید`);
@@ -2708,12 +2810,12 @@
       });
       
       // Search
-      document.getElementById('search-input').addEventListener('input', (e) => {
+      document.getElementById('search-input').addEventListener('input', debounce((e) => {
         state.searchQuery = e.target.value;
         state.currentPage = 1;
         document.getElementById('clear-search').classList.toggle('hidden', !e.target.value);
         updateUI();
-      });
+      }, 300));
       
       document.getElementById('clear-search').addEventListener('click', () => {
         state.searchQuery = '';
@@ -2784,10 +2886,11 @@
         }
       };
       
-      // Initial UI updates
-      renderLanguageTabs();
-      renderVersionHistory();
-      updateUI();
+// Initial UI updates
+       initializeLanguageDropdown();
+       renderLanguageTabs();
+       renderVersionHistory();
+       updateUI();
     });
   </script>
 </body>
