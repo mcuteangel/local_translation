@@ -41,7 +41,7 @@
           </div>
           <div>
             <h1 class="text-lg font-bold text-slate-900 leading-tight">ابزار ترجمه محلی</h1>
-            <p class="text-xs text-slate-500">ترجمه فایل‌های زبان پروژه‌های متن‌باز (JSON، XML، YAML)</p>
+            <p class="text-xs text-slate-500">ترجمه فایل‌های زبان پروژه‌های متن‌باز (JSON، XML، YAML، Properties، CSV، INI، PO)</p>
           </div>
         </div>
         
@@ -50,7 +50,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
           </svg>
           <span class="text-sm text-violet-700 font-medium">ترجمه هوشمند هوش مصنوعی</span>
-          <span class="text-xs text-violet-400">(به‌زودی)</span>
+          <span class="text-xs text-emerald-500">(فعال)</span>
         </div>
 
         <div class="flex items-center gap-2" id="header-actions">
@@ -66,18 +66,48 @@
             </svg>
             ترجمه هوشمند
           </button>
+          <button id="batch-edit-btn" class="hidden h-8 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-xs text-white flex items-center gap-1.5" title="ویرایش گروهی">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            ویرایش گروهی
+          </button>
+          <button id="diff-view-btn" class="hidden h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs text-white flex items-center gap-1.5" title="مقایسه تغییرات">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"></path>
+            </svg>
+            مقایسه
+          </button>
           <button id="upload-target-btn" class="hidden h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
             </svg>
             بارگذاری مقصد
           </button>
-          <button id="export-btn" class="hidden h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs text-white flex items-center gap-1.5">
+          <button id="settings-btn" class="hidden h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 flex items-center gap-1.5" title="تنظیمات">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
-            خروجی گرفتن
+            تنظیمات
           </button>
+          <div class="hidden h-8 relative" id="export-dropdown-wrapper">
+            <button id="export-btn" class="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs text-white flex items-center gap-1.5">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              خروجی گرفتن
+            </button>
+            <div id="export-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-1 min-w-[160px]">
+              <button class="export-format-btn w-full text-right px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2" data-format="json">JSON</button>
+              <button class="export-format-btn w-full text-right px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2" data-format="xml">Android XML</button>
+              <button class="export-format-btn w-full text-right px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2" data-format="yaml">YAML</button>
+              <button class="export-format-btn w-full text-right px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2" data-format="properties">Properties</button>
+              <button class="export-format-btn w-full text-right px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2" data-format="csv">CSV</button>
+              <button class="export-format-btn w-full text-right px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2" data-format="ini">INI</button>
+              <button class="export-format-btn w-full text-right px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2" data-format="po">PO (Gettext)</button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -95,7 +125,7 @@
             </div>
             <h2 class="text-2xl font-bold text-slate-900">شروع ترجمه</h2>
             <p class="text-slate-500 text-sm max-w-md mx-auto">
-              فایل JSON، XML (Android strings.xml)، YAML یا Properties مبدا را بارگذاری کنید تا کلیدهای ترجمه استخراج شوند. سپس می‌توانید فایل ترجمه موجود را نیز اضافه کنید.
+              فایل JSON، XML (Android strings.xml)، YAML، Properties، CSV، INI یا PO (Gettext) مبدا را بارگذاری کنید تا کلیدهای ترجمه استخراج شوند. سپس می‌توانید فایل ترجمه موجود را نیز اضافه کنید.
             </p>
           </div>
 
@@ -105,9 +135,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
               </svg>
               <span class="text-base font-semibold text-emerald-700">بارگذاری فایل مبدا</span>
-              <span class="text-xs text-emerald-500 mt-1">فایل JSON، XML (Android strings.xml)، YAML یا Properties را انتخاب کنید</span>
+              <span class="text-xs text-emerald-500 mt-1">فایل JSON، XML (Android strings.xml)، YAML، Properties، CSV، INI یا PO (Gettext) را انتخاب کنید</span>
               <span class="text-xs text-slate-400 mt-2">الزامی</span>
-              <input type="file" id="source-file" accept=".json,.xml,.yaml,.yml,.properties" class="hidden">
+              <input type="file" id="source-file" accept=".json,.xml,.yaml,.yml,.properties,.csv,.ini,.po" class="hidden">
             </label>
 
             <label class="group relative flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50/50 hover:bg-slate-50 hover:border-slate-400 cursor-pointer transition-all duration-200">
@@ -115,8 +145,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
               </svg>
               <span class="text-sm font-medium text-slate-600">بارگذاری فایل مقصد - اختیاری</span>
-              <span class="text-xs text-slate-400 mt-1">فایل ترجمه موجود (JSON، XML، YAML یا Properties) را برای ادامه کار بارگذاری کنید</span>
-              <input type="file" id="target-file" accept=".json,.xml,.yaml,.yml,.properties" class="hidden">
+              <span class="text-xs text-slate-400 mt-1">فایل ترجمه موجود (JSON، XML، YAML، Properties، CSV، INI یا PO) را برای ادامه کار بارگذاری کنید</span>
+              <input type="file" id="target-file" accept=".json,.xml,.yaml,.yml,.properties,.csv,.ini,.po" class="hidden">
             </label>
           </div>
 
@@ -170,6 +200,50 @@
                 </svg>
                 تغییر فایل مبدا
               </button>
+            </div>
+
+            <div class="h-px bg-slate-200"></div>
+
+            <!-- Multi-Language Tabs -->
+            <div class="space-y-2">
+              <h3 class="text-sm font-bold text-slate-700">زبان‌های مقصد</h3>
+              <div id="language-tabs" class="flex flex-wrap gap-1.5"></div>
+              <div class="flex gap-1.5">
+                <select id="add-language-select" class="flex-1 text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white">
+                  <option value="">افزودن زبان جدید...</option>
+                  <option value="fa">🇮🇷 فارسی</option>
+                  <option value="en">🇬🇧 English</option>
+                  <option value="ar">🇸🇦 العربية</option>
+                  <option value="de">🇩🇪 Deutsch</option>
+                  <option value="fr">🇫🇷 Français</option>
+                  <option value="es">🇪🇸 Español</option>
+                  <option value="ru">🇷🇺 Русский</option>
+                  <option value="zh">🇨🇳 中文</option>
+                  <option value="ja">🇯🇵 日本語</option>
+                  <option value="ko">🇰🇷 한국어</option>
+                  <option value="tr">🇹🇷 Türkçe</option>
+                  <option value="ur">🇵🇰 اردو</option>
+                  <option value="hi">🇮🇳 हिन्दी</option>
+                  <option value="pt">🇧🇷 Português</option>
+                  <option value="it">🇮🇹 Italiano</option>
+                </select>
+                <button id="add-language-btn" class="px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs">
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div class="h-px bg-slate-200"></div>
+
+            <!-- Version History -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-700">تاریخچه نسخه‌ها</h3>
+                <button id="save-version-btn" class="text-xs px-2 py-1 rounded bg-violet-100 text-violet-700 hover:bg-violet-200">ذخیره نسخه</button>
+              </div>
+              <div id="version-list" class="space-y-1 max-h-40 overflow-y-auto scrollbar-thin">
+                <p class="text-xs text-slate-400 text-center py-2">هیچ نسخه‌ای ذخیره نشده است</p>
+              </div>
             </div>
 
             <div class="h-px bg-slate-200"></div>
@@ -328,7 +402,7 @@
     <!-- Footer -->
     <footer class="border-t border-slate-200 bg-white py-3 px-4 mt-auto">
       <div class="max-w-screen-2xl mx-auto flex items-center justify-between text-xs text-slate-400">
-        <span>ابزار ترجمه محلی — پشتیبانی از JSON، XML (Android strings.xml)، YAML و Properties</span>
+        <span>ابزار ترجمه محلی — پشتیبانی از JSON، XML، YAML، Properties، CSV، INI و PO</span>
         <span>ساخت شده با ❤️ برای جامعه فارسی‌زبان</span>
       </div>
     </footer>
@@ -336,6 +410,156 @@
 
   <!-- Toast Container -->
   <div id="toast-container" class="fixed bottom-4 left-4 z-50 space-y-2"></div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between p-4 border-b border-slate-200">
+        <h2 class="text-base font-bold text-slate-800">تنظیمات</h2>
+        <button id="close-settings-btn" class="h-8 w-8 rounded-lg hover:bg-slate-100 flex items-center justify-center">
+          <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-4 space-y-5">
+        <!-- Translation API -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+            <svg class="h-4 w-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            سرویس ترجمه خودکار
+          </h3>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-xs text-slate-600">
+              <input type="radio" name="api-service" value="google" class="text-emerald-600"> Google Translate
+            </label>
+            <label class="flex items-center gap-2 text-xs text-slate-600">
+              <input type="radio" name="api-service" value="deepl" class="text-emerald-600"> DeepL
+            </label>
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs text-slate-600">کلید API</label>
+            <input type="password" id="api-key-input" placeholder="کلید API خود را وارد کنید" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div id="deepl-options" class="hidden space-y-2">
+            <label class="flex items-center gap-2 text-xs text-slate-600">
+              <input type="checkbox" id="deepl-pro" class="text-emerald-600"> حساب DeepL Pro
+            </label>
+          </div>
+          <button id="save-api-btn" class="px-4 py-2 bg-violet-600 text-white text-xs rounded-lg hover:bg-violet-700">ذخیره تنظیمات API</button>
+        </div>
+
+        <div class="h-px bg-slate-200"></div>
+
+        <!-- Encryption -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+            <svg class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            رمزگذاری داده‌ها
+          </h3>
+          <p class="text-[11px] text-slate-400">با فعال‌سازی رمزگذاری، داده‌های شما با الگوریتم AES-256-GCM در مرورگر رمز می‌شوند.</p>
+          <div class="flex gap-2">
+            <input type="password" id="encryption-password" placeholder="رمز عبور رمزگذاری" class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <button id="toggle-encryption-btn" class="px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs hover:bg-emerald-700">فعال‌سازی</button>
+          </div>
+          <div id="encryption-status" class="hidden text-[11px] text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">رمزگذاری فعال است</div>
+        </div>
+
+        <div class="h-px bg-slate-200"></div>
+
+        <!-- Plugins -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+            <svg class="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path>
+            </svg>
+            پلاگین‌ها
+          </h3>
+          <div id="plugins-list" class="space-y-1">
+            <p class="text-xs text-slate-400">پلاگین فعال: auto-cleanup</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Edit Modal -->
+  <div id="batch-edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
+      <div class="flex items-center justify-between p-4 border-b border-slate-200">
+        <h2 class="text-base font-bold text-slate-800">ویرایش گروهی</h2>
+        <button id="close-batch-edit-btn" class="h-8 w-8 rounded-lg hover:bg-slate-100 flex items-center justify-center">
+          <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-4 space-y-4">
+        <div class="flex items-center justify-between text-xs text-slate-500">
+          <span>تعداد رشته‌های انتخاب‌شده: <span id="batch-count">۰</span></span>
+          <div class="flex gap-2">
+            <button id="select-all-btn" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200">انتخاب همه</button>
+            <button id="deselect-all-btn" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200">لغو انتخاب</button>
+          </div>
+        </div>
+        
+        <div class="space-y-3">
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-700">جستجو و جایگزینی</label>
+            <div class="flex gap-2">
+              <input type="text" id="batch-find" placeholder="متن مورد جستجو" class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <input type="text" id="batch-replace" placeholder="متن جایگزین" class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <button id="batch-replace-all-btn" class="w-full px-3 py-2 bg-amber-600 text-white text-xs rounded-lg hover:bg-amber-700">جایگزینی در همه رشته‌های ترجمه نشده</button>
+          </div>
+          
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-700">پیشوند/پسوند</label>
+            <div class="flex gap-2">
+              <input type="text" id="batch-prefix" placeholder="پیشوند" class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <input type="text" id="batch-suffix" placeholder="پسوند" class="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <button id="batch-prefix-suffix-btn" class="w-full px-3 py-2 bg-violet-600 text-white text-xs rounded-lg hover:bg-violet-700">اعمال به همه رشته‌های ترجمه نشده</button>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-700">پاک کردن همه ترجمه‌ها</label>
+            <button id="batch-clear-all-btn" class="w-full px-3 py-2 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600">پاک کردن همه ترجمه‌ها</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diff View Modal -->
+  <div id="diff-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between p-4 border-b border-slate-200">
+        <h2 class="text-base font-bold text-slate-800">مقایسه تغییرات</h2>
+        <button id="close-diff-btn" class="h-8 w-8 rounded-lg hover:bg-slate-100 flex items-center justify-center">
+          <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold text-slate-600">متن مبدا</h3>
+            <div id="diff-source" class="space-y-2"></div>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold text-slate-600">ترجمه فعلی</h3>
+            <div id="diff-target" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     // ===== Utility Functions =====
@@ -385,6 +609,9 @@
       if (ext.endsWith('.xml')) return 'xml';
       if (ext.endsWith('.yaml') || ext.endsWith('.yml')) return 'yaml';
       if (ext.endsWith('.properties')) return 'properties';
+      if (ext.endsWith('.csv')) return 'csv';
+      if (ext.endsWith('.ini')) return 'ini';
+      if (ext.endsWith('.po')) return 'po';
       return 'json';
     }
 
@@ -530,6 +757,629 @@
       
       return { flat, metadata: [] };
     }
+
+    // Parse CSV content
+    function parseCSV(content) {
+      const flat = {};
+      const lines = content.split('\n');
+      if (lines.length < 2) return { flat, metadata: [] };
+      
+      // Determine separator (comma, semicolon, or tab)
+      const firstLine = lines[0];
+      let sep = ',';
+      if (firstLine.includes('\t')) sep = '\t';
+      else if (firstLine.includes(';')) sep = ';';
+      
+      const headers = firstLine.split(sep).map(h => h.trim().replace(/^["']|["']$/g, ''));
+      
+      // Detect if first line is a header row: common header labels are short words without spaces.
+      // Use word boundary matching to avoid false positives (e.g. "name" inside "app_name").
+      const isHeaderRow = headers.some(h => /^(key|id|name|value|text|translation|کلید|مقدار|ترجمه)$/i.test(h.trim()));
+      
+      if (!isHeaderRow) {
+        // No header row — treat every line as key,value
+        for (let i = 0; i < lines.length; i++) {
+          const parts = lines[i].split(sep);
+          if (parts.length > 0 && parts[0].trim()) {
+            const key = parts[0].trim().replace(/^["']|["']$/g, '');
+            const val = parts.length > 1 ? parts.slice(1).join(sep).trim().replace(/^["']|["']$/g, '') : '';
+            if (key) flat[key] = val;
+          }
+        }
+      } else {
+        // Has header row — find key and value columns
+        const keyCol = headers.findIndex(h => /^(key|id|name|کلید)$/i.test(h.trim()));
+        const valueCol = headers.findIndex(h => /^(value|text|translation|مقدار|ترجمه)$/i.test(h.trim()));
+        if (keyCol === -1) {
+          // Fallback: first column is key, pick the next best for value
+          for (let i = 1; i < lines.length; i++) {
+            const parts = lines[i].split(sep);
+            if (parts.length > 0 && parts[0].trim()) {
+              const key = parts[0].trim().replace(/^["']|["']$/g, '');
+              const val = parts.length > 1 ? parts.slice(1).join(sep).trim().replace(/^["']|["']$/g, '') : '';
+              if (key) flat[key] = val;
+            }
+          }
+        } else {
+          for (let i = 1; i < lines.length; i++) {
+            const parts = lines[i].split(sep);
+            if (parts.length <= keyCol) continue;
+            const key = parts[keyCol].trim().replace(/^["']|["']$/g, '');
+            if (!key) continue;
+            const val = valueCol >= 0 && parts[valueCol] 
+              ? parts[valueCol].trim().replace(/^["']|["']$/g, '') 
+              : '';
+            flat[key] = val;
+          }
+        }
+      }
+      return { flat, metadata: [] };
+    }
+
+    // Parse INI content
+    function parseINI(content) {
+      const flat = {};
+      let currentSection = '';
+      const lines = content.split('\n');
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith(';')) continue;
+        
+        const sectionMatch = trimmed.match(/^\[(.+)\]$/);
+        if (sectionMatch) {
+          currentSection = sectionMatch[1].trim();
+          continue;
+        }
+        
+        const equalIndex = trimmed.indexOf('=');
+        if (equalIndex > 0) {
+          let key = trimmed.substring(0, equalIndex).trim();
+          const value = trimmed.substring(equalIndex + 1).trim();
+          if (currentSection) key = `${currentSection}.${key}`;
+          flat[key] = value;
+        }
+      }
+      return { flat, metadata: [] };
+    }
+
+    // Parse PO (gettext) content
+    function parsePO(content) {
+      const flat = {};
+      const lines = content.split('\n');
+      let currentMsgid = '';
+      let currentMsgstr = '';
+      let inMsgid = false;
+      let inMsgstr = false;
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('msgid ')) {
+          if (currentMsgid && currentMsgstr) {
+            flat[currentMsgid] = currentMsgstr;
+          }
+          const match = trimmed.match(/^msgid\s+"(.+)"$/);
+          currentMsgid = match ? match[1] : '';
+          currentMsgstr = '';
+          inMsgid = true;
+          inMsgstr = false;
+        } else if (trimmed.startsWith('msgstr ')) {
+          const match = trimmed.match(/^msgstr\s+"(.+)"$/);
+          currentMsgstr = match ? match[1] : '';
+          inMsgid = false;
+          inMsgstr = true;
+        } else if (inMsgid && trimmed.startsWith('"')) {
+          const match = trimmed.match(/^"(.+)"$/);
+          if (match) currentMsgid += match[1];
+        } else if (inMsgstr && trimmed.startsWith('"')) {
+          const match = trimmed.match(/^"(.+)"$/);
+          if (match) currentMsgstr += match[1];
+        }
+      }
+      if (currentMsgid && currentMsgstr) {
+        flat[currentMsgid] = currentMsgstr;
+      }
+      return { flat, metadata: [] };
+    }
+
+    // Serialize to CSV format
+    function serializeCSV(translations) {
+      let csv = 'key,value\n';
+      for (const key in translations) {
+        const value = translations[key];
+        if (value !== undefined && value !== null) {
+          const escapedKey = key.includes(',') || key.includes('"') ? `"${key.replace(/"/g, '""')}"` : key;
+          const escapedValue = String(value).includes(',') || String(value).includes('"') 
+            ? `"${String(value).replace(/"/g, '""')}"` : value;
+          csv += `${escapedKey},${escapedValue}\n`;
+        }
+      }
+      return csv;
+    }
+
+    // Serialize to INI format
+    function serializeINI(translations) {
+      let ini = '; Translation file\n';
+      const sections = {};
+      
+      for (const key in translations) {
+        const value = translations[key];
+        if (value === undefined || value === null) continue;
+        const dotIndex = key.indexOf('.');
+        if (dotIndex > 0) {
+          const section = key.substring(0, dotIndex);
+          const subKey = key.substring(dotIndex + 1);
+          if (!sections[section]) sections[section] = {};
+          sections[section][subKey] = value;
+        } else {
+          if (!sections['_global']) sections['_global'] = {};
+          sections['_global'][key] = value;
+        }
+      }
+      
+      for (const section in sections) {
+        if (section !== '_global') ini += `\n[${section}]\n`;
+        for (const key in sections[section]) {
+          ini += `${key}=${sections[section][key]}\n`;
+        }
+      }
+      return ini;
+    }
+
+    // Serialize to PO format
+    function serializePO(translations) {
+      let po = '';
+      for (const key in translations) {
+        const value = translations[key];
+        if (value !== undefined && value !== null) {
+          po += `msgid "${key}"\n`;
+          po += `msgstr "${String(value).replace(/"/g, '\\"')}"\n\n`;
+        }
+      }
+      return po;
+    }
+
+    // ===== Translation API Service =====
+    
+    const TranslationService = {
+      config: {
+        googleApiKey: '',
+        deeplApiKey: '',
+        deeplIsPro: false,
+        preferredService: 'google'
+      },
+
+      loadConfig() {
+        try {
+          const saved = localStorage.getItem('translation-api-config');
+          if (saved) this.config = { ...this.config, ...JSON.parse(saved) };
+        } catch (e) { /* ignore */ }
+      },
+
+      saveConfig() {
+        localStorage.setItem('translation-api-config', JSON.stringify(this.config));
+      },
+
+      async translate(text, targetLang, sourceLang = 'auto') {
+        if (!text || typeof text !== 'string') return text;
+        
+        if (this.config.preferredService === 'google' && this.config.googleApiKey) {
+          return this.translateGoogle(text, targetLang, sourceLang);
+        } else if (this.config.preferredService === 'deepl' && this.config.deeplApiKey) {
+          return this.translateDeepL(text, targetLang, sourceLang);
+        }
+        throw new Error('API ترجمه پیکربندی نشده است. لطفاً ابتدا کلید API را در تنظیمات وارد کنید.');
+      },
+
+      async translateGoogle(text, targetLang, sourceLang) {
+        const url = `https://translation.googleapis.com/language/translate/v2?key=${this.config.googleApiKey}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            q: text,
+            target: targetLang,
+            source: sourceLang === 'auto' ? undefined : sourceLang,
+            format: 'text'
+          })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message || 'Google Translate API خطا');
+        return data.data.translations[0].translatedText;
+      },
+
+      async translateDeepL(text, targetLang, sourceLang) {
+        const baseUrl = this.config.deeplIsPro 
+          ? 'https://api.deepl.com/v2/translate' 
+          : 'https://api-free.deepl.com/v2/translate';
+        const response = await fetch(baseUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `DeepL-Auth-Key ${this.config.deeplApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: [text],
+            target_lang: targetLang.toUpperCase(),
+            source_lang: sourceLang === 'auto' ? undefined : sourceLang.toUpperCase()
+          })
+        });
+        const data = await response.json();
+        if (data.message) throw new Error(data.message || 'DeepL API خطا');
+        return data.translations[0].text;
+      },
+
+      getLanguageCode(langName) {
+        const map = {
+          'fa': 'fa', 'persian': 'fa', 'فارسی': 'fa',
+          'en': 'en', 'english': 'en', 'انگلیسی': 'en',
+          'ar': 'ar', 'arabic': 'ar', 'عربی': 'ar',
+          'de': 'de', 'german': 'de', 'آلمانی': 'de',
+          'fr': 'fr', 'french': 'fr', 'فرانسوی': 'fr',
+          'es': 'es', 'spanish': 'es', 'اسپانیایی': 'es',
+          'ru': 'ru', 'russian': 'ru', 'روسی': 'ru',
+          'zh': 'zh', 'chinese': 'zh', 'چینی': 'zh',
+          'ja': 'ja', 'japanese': 'ja', 'ژاپنی': 'ja',
+          'ko': 'ko', 'korean': 'ko', 'کره‌ای': 'ko',
+          'tr': 'tr', 'turkish': 'tr', 'ترکی': 'tr',
+          'ur': 'ur', 'urdu': 'ur', 'اردو': 'ur',
+          'hi': 'hi', 'hindi': 'hi', 'هندی': 'hi',
+          'pt': 'pt', 'portuguese': 'pt', 'پرتغالی': 'pt',
+          'it': 'it', 'italian': 'it', 'ایتالیایی': 'it',
+          'nl': 'nl', 'dutch': 'nl', 'هلندی': 'nl',
+          'sv': 'sv', 'swedish': 'sv', 'سوئدی': 'sv',
+          'da': 'da', 'danish': 'da', 'دانمارکی': 'da',
+          'fi': 'fi', 'finnish': 'fi', 'فنلاندی': 'fi',
+          'no': 'no', 'norwegian': 'no', 'نروژی': 'no',
+          'pl': 'pl', 'polish': 'pl', 'لهستانی': 'pl',
+          'cs': 'cs', 'czech': 'cs', 'چکی': 'cs',
+          'sk': 'sk', 'slovak': 'sk', 'اسلواکی': 'sk',
+          'hu': 'hu', 'hungarian': 'hu', 'مجارستانی': 'hu',
+          'ro': 'ro', 'romanian': 'ro', 'رومانیایی': 'ro',
+          'th': 'th', 'thai': 'th', 'تایلندی': 'th',
+          'vi': 'vi', 'vietnamese': 'vi', 'ویتنامی': 'vi',
+          'id': 'id', 'indonesian': 'id', 'اندونزیایی': 'id',
+          'ms': 'ms', 'malay': 'ms', 'مالایی': 'ms'
+        };
+        return map[langName.toLowerCase()] || langName;
+      },
+
+      async translateBatch(entries, targetLang, sourceLang = 'auto', onProgress = null) {
+        const results = {};
+        const keys = Object.keys(entries);
+        let completed = 0;
+        const BATCH_SIZE = 5;
+        
+        for (let i = 0; i < keys.length; i += BATCH_SIZE) {
+          const batch = keys.slice(i, i + BATCH_SIZE);
+          const promises = batch.map(async (key) => {
+            try {
+              results[key] = await this.translate(entries[key], targetLang, sourceLang);
+            } catch (e) {
+              results[key] = entries[key]; // fallback to original
+            }
+            completed++;
+            if (onProgress) onProgress(completed, keys.length);
+          });
+          await Promise.all(promises);
+        }
+        return results;
+      }
+    };
+
+    TranslationService.loadConfig();
+
+    // ===== Encryption Module =====
+    
+    const EncryptionModule = {
+      enabled: false,
+      key: null,
+      
+      async init(password) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+          'raw', enc.encode(password),
+          { name: 'PBKDF2' }, false, ['deriveKey']
+        );
+        this.key = await crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: enc.encode('translation-tool-salt'), iterations: 100000, hash: 'SHA-256' },
+          keyMaterial,
+          { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+        );
+        this.enabled = true;
+      },
+      
+      async encrypt(data) {
+        if (!this.enabled || !this.key) return data;
+        const enc = new TextEncoder();
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encrypted = await crypto.subtle.encrypt(
+          { name: 'AES-GCM', iv },
+          this.key, enc.encode(JSON.stringify(data))
+        );
+        const combined = new Uint8Array(iv.length + encrypted.byteLength);
+        combined.set(iv);
+        combined.set(new Uint8Array(encrypted), iv.length);
+        return btoa(String.fromCharCode(...combined));
+      },
+      
+      async decrypt(encoded) {
+        if (!this.enabled || !this.key) return null;
+        try {
+          const combined = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
+          const iv = combined.slice(0, 12);
+          const data = combined.slice(12);
+          const decrypted = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv },
+            this.key, data
+          );
+          return JSON.parse(new TextDecoder().decode(decrypted));
+        } catch (e) {
+          console.error('Decryption failed:', e);
+          return null;
+        }
+      },
+      
+      async secureSave(data) {
+        try {
+          const encrypted = await this.encrypt(data);
+          if (encrypted !== data) {
+            localStorage.setItem(STORAGE_KEY + '-encrypted', encrypted);
+            localStorage.setItem(STORAGE_KEY + '-enc-meta', JSON.stringify({ enabled: true, timestamp: Date.now() }));
+            return true;
+          }
+        } catch (e) {
+          console.error('Secure save failed:', e);
+        }
+        return false;
+      },
+      
+      async secureLoad() {
+        try {
+          const meta = localStorage.getItem(STORAGE_KEY + '-enc-meta');
+          if (meta && JSON.parse(meta).enabled) {
+            const encrypted = localStorage.getItem(STORAGE_KEY + '-encrypted');
+            if (encrypted) return await this.decrypt(encrypted);
+          }
+        } catch (e) { /* ignore */ }
+        return null;
+      }
+    };
+
+    // ===== Version History Manager =====
+    
+    const VersionManager = {
+      versions: [],
+      maxVersions: 20,
+      
+      load() {
+        try {
+          const saved = localStorage.getItem('translation-versions');
+          if (saved) this.versions = JSON.parse(saved);
+        } catch (e) { this.versions = []; }
+      },
+      
+      save() {
+        localStorage.setItem('translation-versions', JSON.stringify(this.versions));
+      },
+      
+      addSnapshot(translations, label = '') {
+        this.load();
+        this.versions.push({
+          id: Date.now(),
+          timestamp: new Date().toISOString(),
+          label: label || `نسخه ${this.versions.length + 1}`,
+          data: JSON.parse(JSON.stringify(translations)),
+          totalKeys: Object.keys(translations).length,
+          translatedKeys: Object.keys(translations).filter(k => translations[k] && translations[k].trim()).length
+        });
+        if (this.versions.length > this.maxVersions) {
+          this.versions = this.versions.slice(-this.maxVersions);
+        }
+        this.save();
+      },
+      
+      restore(versionId) {
+        this.load();
+        const version = this.versions.find(v => v.id === versionId);
+        return version ? JSON.parse(JSON.stringify(version.data)) : null;
+      },
+      
+      getVersions() {
+        this.load();
+        return [...this.versions].reverse();
+      },
+      
+      deleteVersion(versionId) {
+        this.load();
+        this.versions = this.versions.filter(v => v.id !== versionId);
+        this.save();
+      },
+      
+      clear() {
+        this.versions = [];
+        this.save();
+      }
+    };
+
+    VersionManager.load();
+
+    // ===== Plugin System =====
+    
+    const PluginSystem = {
+      plugins: [],
+      hooks: {},
+      
+      register(plugin) {
+        if (!plugin.name || !plugin.hooks) {
+          console.warn('Invalid plugin:', plugin);
+          return false;
+        }
+        this.plugins.push(plugin);
+        if (!this.hooks[plugin.name]) this.hooks[plugin.name] = {};
+        for (const [hook, fn] of Object.entries(plugin.hooks)) {
+          if (!this.hooks[hook]) this.hooks[hook] = [];
+          this.hooks[hook].push({ name: plugin.name, fn });
+        }
+        return true;
+      },
+      
+      async runHook(hook, ...args) {
+        if (!this.hooks[hook]) return args[0];
+        let result = args[0];
+        for (const handler of this.hooks[hook]) {
+          try {
+            result = await handler.fn(result, ...args.slice(1)) || result;
+          } catch (e) {
+            console.error(`Plugin ${handler.name} error on hook ${hook}:`, e);
+          }
+        }
+        return result;
+      },
+      
+      getPlugins() {
+        return [...this.plugins];
+      }
+    };
+
+    // Built-in example plugins
+    PluginSystem.register({
+      name: 'auto-cleanup',
+      description: 'حذف خودکار فاصله‌های اضافی از ترجمه‌ها',
+      hooks: {
+        'before-save': (data) => {
+          const cleaned = {};
+          for (const [key, val] of Object.entries(data)) {
+            cleaned[key] = typeof val === 'string' ? val.trim().replace(/\s+/g, ' ') : val;
+          }
+          return cleaned;
+        }
+      }
+    });
+
+    // ===== Virtual Scroller for Performance =====
+    
+    class VirtualScroller {
+      constructor(container, options = {}) {
+        this.container = container;
+        this.itemHeight = options.itemHeight || 80;
+        this.buffer = options.buffer || 5;
+        this.items = [];
+        this.renderItem = options.renderItem || (() => '');
+        this.onRender = options.onRender || (() => {});
+        this._scrollHandler = this._onScroll.bind(this);
+        this.container.addEventListener('scroll', this._scrollHandler);
+      }
+      
+      setItems(items) {
+        this.items = items;
+        this.container.innerHTML = '';
+        if (items.length === 0) return;
+        
+        // Create inner wrapper
+        this.wrapper = document.createElement('div');
+        this.wrapper.style.position = 'relative';
+        this.wrapper.style.height = `${items.length * this.itemHeight}px`;
+        this.container.appendChild(this.wrapper);
+        
+        this._render();
+      }
+      
+      _onScroll() {
+        this._render();
+      }
+      
+      _render() {
+        if (!this.wrapper) return;
+        const scrollTop = this.container.scrollTop;
+        const clientHeight = this.container.clientHeight;
+        const startIdx = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer);
+        const endIdx = Math.min(this.items.length, Math.ceil((scrollTop + clientHeight) / this.itemHeight) + this.buffer);
+        
+        // Remove old children
+        while (this.wrapper.firstChild) this.wrapper.firstChild.remove();
+        
+        // Render visible items
+        for (let i = startIdx; i < endIdx; i++) {
+          const el = document.createElement('div');
+          el.style.position = 'absolute';
+          el.style.top = `${i * this.itemHeight}px`;
+          el.style.left = '0';
+          el.style.right = '0';
+          el.style.height = `${this.itemHeight}px`;
+          el.innerHTML = this.renderItem(this.items[i], i);
+          this.wrapper.appendChild(el);
+        }
+        
+        this.onRender(startIdx, endIdx);
+      }
+      
+      destroy() {
+        this.container.removeEventListener('scroll', this._scrollHandler);
+      }
+    }
+
+    // ===== Multi-Language Support =====
+    
+    let targetLanguages = {
+      current: 'fa',
+      languages: {
+        'fa': { name: 'فارسی', flag: '🇮🇷', translations: {} }
+      }
+    };
+
+    function addTargetLanguage(code, name, flag = '') {
+      if (targetLanguages.languages[code]) return;
+      targetLanguages.languages[code] = {
+        name,
+        flag,
+        translations: {}
+      };
+      saveTargetLanguages();
+    }
+
+    function switchTargetLanguage(code) {
+      if (!targetLanguages.languages[code]) return;
+      
+      // Save current language translations
+      if (targetLanguages.current) {
+        targetLanguages.languages[targetLanguages.current].translations = 
+          JSON.parse(JSON.stringify(state.targetTranslations));
+      }
+      
+      targetLanguages.current = code;
+      state.targetTranslations = JSON.parse(
+        JSON.stringify(targetLanguages.languages[code].translations || {})
+      );
+      saveTargetLanguages();
+      updateUI();
+    }
+
+    function saveTargetLanguages() {
+      // Save current language data before persisting
+      if (targetLanguages.current && targetLanguages.languages[targetLanguages.current]) {
+        targetLanguages.languages[targetLanguages.current].translations = 
+          JSON.parse(JSON.stringify(state.targetTranslations));
+      }
+      localStorage.setItem('target-languages', JSON.stringify(targetLanguages));
+    }
+
+    function loadTargetLanguages() {
+      try {
+        const saved = localStorage.getItem('target-languages');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          targetLanguages = parsed;
+          if (targetLanguages.languages[targetLanguages.current]) {
+            state.targetTranslations = JSON.parse(
+              JSON.stringify(targetLanguages.languages[targetLanguages.current].translations || {})
+            );
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    loadTargetLanguages();
 
     // Serialize to Android strings.xml format
     function serializeXML(translations, metadata) {
@@ -814,15 +1664,30 @@
       const autoSaveBadge = document.getElementById('auto-save-badge');
       const uploadTargetBtn = document.getElementById('upload-target-btn');
       const exportBtn = document.getElementById('export-btn');
+      const exportDropdownWrapper = document.getElementById('export-dropdown-wrapper');
+      const batchEditBtn = document.getElementById('batch-edit-btn');
+      const diffViewBtn = document.getElementById('diff-view-btn');
+      const settingsBtn = document.getElementById('settings-btn');
+      const aiTranslateBtn = document.getElementById('ai-translate-btn');
       
       if (hasSourceFile) {
         autoSaveBadge?.classList.remove('hidden');
         uploadTargetBtn?.classList.remove('hidden');
         exportBtn?.classList.remove('hidden');
+        exportDropdownWrapper?.classList.remove('hidden');
+        batchEditBtn?.classList.remove('hidden');
+        diffViewBtn?.classList.remove('hidden');
+        settingsBtn?.classList.remove('hidden');
+        aiTranslateBtn?.classList.remove('hidden');
       } else {
         autoSaveBadge?.classList.add('hidden');
         uploadTargetBtn?.classList.add('hidden');
         exportBtn?.classList.add('hidden');
+        exportDropdownWrapper?.classList.add('hidden');
+        batchEditBtn?.classList.add('hidden');
+        diffViewBtn?.classList.add('hidden');
+        settingsBtn?.classList.add('hidden');
+        aiTranslateBtn?.classList.add('hidden');
       }
       
       if (!hasSourceFile) return;
@@ -1158,6 +2023,21 @@
             flat = result.flat;
             fileType = 'properties';
             metadata = result.metadata;
+          } else if (detectedType === 'csv') {
+            const result = parseCSV(content);
+            flat = result.flat;
+            fileType = 'csv';
+            metadata = result.metadata;
+          } else if (detectedType === 'ini') {
+            const result = parseINI(content);
+            flat = result.flat;
+            fileType = 'ini';
+            metadata = result.metadata;
+          } else if (detectedType === 'po') {
+            const result = parsePO(content);
+            flat = result.flat;
+            fileType = 'po';
+            metadata = result.metadata;
           } else {
             const json = JSON.parse(content);
             flat = flattenJSON(json);
@@ -1172,11 +2052,14 @@
           
           const typeLabel = fileType === 'xml' ? ' (فایل XML)' : 
                            fileType === 'yaml' ? ' (فایل YAML)' : 
-                           fileType === 'properties' ? ' (فایل Properties)' : ' (فایل JSON)';
+                           fileType === 'properties' ? ' (فایل Properties)' : 
+                           fileType === 'csv' ? ' (فایل CSV)' :
+                           fileType === 'ini' ? ' (فایل INI)' :
+                           fileType === 'po' ? ' (فایل PO)' : ' (فایل JSON)';
           showToast('فایل مبدا بارگذاری شد', `${toPersianNumber(Object.keys(flat).length)} کلید یافت شد${typeLabel}`);
         } catch (err) {
           console.error(err);
-          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON، XML (Android strings.xml)، YAML یا Properties بارگذاری کنید', 'destructive');
+          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON، XML، YAML، Properties، CSV، INI یا PO بارگذاری کنید', 'destructive');
           return;
         }
         
@@ -1210,6 +2093,15 @@
           } else if (targetFileType === 'properties') {
             const result = parseProperties(content);
             flat = result.flat;
+          } else if (targetFileType === 'csv') {
+            const result = parseCSV(content);
+            flat = result.flat;
+          } else if (targetFileType === 'ini') {
+            const result = parseINI(content);
+            flat = result.flat;
+          } else if (targetFileType === 'po') {
+            const result = parsePO(content);
+            flat = result.flat;
           } else {
             const json = JSON.parse(content);
             flat = flattenJSON(json);
@@ -1233,63 +2125,53 @@
           showToast('فایل مقصد بارگذاری شد', `${toPersianNumber(matched)} کلید مطابقت داشت از ${toPersianNumber(Object.keys(flat).length)} کلید`);
           updateUI();
         } catch (err) {
-          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON، XML (Android strings.xml)، YAML یا Properties بارگذاری کنید', 'destructive');
+          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON، XML، YAML، Properties، CSV، INI یا PO بارگذاری کنید', 'destructive');
         }
       };
       reader.readAsText(file);
     }
 
-    function handleExport() {
+    function handleExport(format) {
+      const exportFormat = format || state.sourceFileType;
       let content, mimeType, defaultFileName;
       
-      if (state.sourceFileType === 'xml') {
-        const finalTranslations = {};
-        for (const key in state.sourceKeys) {
-          if (Array.isArray(state.sourceKeys[key])) {
-            // آرایه‌ها را همیشه نگه می‌داریم تا ساختار فایل به هم نریزد
-            finalTranslations[key] = state.targetTranslations[key] || state.sourceKeys[key];
-          } else if (state.targetTranslations[key] && state.targetTranslations[key].trim() !== '') {
-            // فقط و فقط اگر کلید ترجمه شده بود، آن را به فایل مقصد اضافه کن
-            finalTranslations[key] = state.targetTranslations[key];
-          }
-          // اگر ترجمه نشده باشد، کلاً به شیء نهایی اضافه نمی‌شود -> در نتیجه اندروید به زبان اصلی Fallback می‌کند
+      // Build final translations (only translated keys)
+      const finalTranslations = {};
+      for (const key in state.sourceKeys) {
+        if (Array.isArray(state.sourceKeys[key])) {
+          finalTranslations[key] = state.targetTranslations[key] || state.sourceKeys[key];
+        } else if (state.targetTranslations[key] && state.targetTranslations[key].trim() !== '') {
+          finalTranslations[key] = state.targetTranslations[key];
         }
-        
+      }
+      
+      if (exportFormat === 'xml') {
         content = serializeXML(finalTranslations, state.xmlMetadata);
         mimeType = 'application/xml';
         defaultFileName = state.targetFileName || 'fa.xml';
-      } else if (state.sourceFileType === 'yaml') {
-        const finalTranslations = {};
-        for (const key in state.sourceKeys) {
-          if (state.targetTranslations[key] && state.targetTranslations[key].trim() !== '') {
-            finalTranslations[key] = state.targetTranslations[key];
-          }
-        }
+      } else if (exportFormat === 'yaml') {
         content = serializeYAML(finalTranslations);
         mimeType = 'text/yaml';
         defaultFileName = state.targetFileName || 'fa.yaml';
-      } else if (state.sourceFileType === 'properties') {
-        const finalTranslations = {};
-        for (const key in state.sourceKeys) {
-          if (state.targetTranslations[key] && state.targetTranslations[key].trim() !== '') {
-            finalTranslations[key] = state.targetTranslations[key];
-          }
-        }
+      } else if (exportFormat === 'properties') {
         content = serializeProperties(finalTranslations);
         mimeType = 'text/plain';
         defaultFileName = state.targetFileName || 'fa.properties';
+      } else if (exportFormat === 'csv') {
+        content = serializeCSV(finalTranslations);
+        mimeType = 'text/csv';
+        defaultFileName = state.targetFileName ? state.targetFileName.replace(/\.\w+$/, '.csv') : 'fa.csv';
+      } else if (exportFormat === 'ini') {
+        content = serializeINI(finalTranslations);
+        mimeType = 'text/plain';
+        defaultFileName = state.targetFileName ? state.targetFileName.replace(/\.\w+$/, '.ini') : 'fa.ini';
+      } else if (exportFormat === 'po') {
+        content = serializePO(finalTranslations);
+        mimeType = 'text/plain';
+        defaultFileName = state.targetFileName ? state.targetFileName.replace(/\.\w+$/, '.po') : 'fa.po';
       } else {
-        // برای فایل‌های JSON
-        const finalJsonTranslations = {};
-        for (const key in state.sourceKeys) {
-          if (state.targetTranslations[key] && state.targetTranslations[key].trim() !== '') {
-            // فقط کلیدهای ترجمه شده را نگه دار
-            finalJsonTranslations[key] = state.targetTranslations[key];
-          }
-        }
-        
-        // تبدیل کلیدهای فلت به ساختار درختی (فقط برای کلیدهای ترجمه شده)
-        const nested = unflattenJSON(finalJsonTranslations);
+        // JSON
+        const nested = unflattenJSON(finalTranslations);
         content = JSON.stringify(nested, null, 2);
         mimeType = 'application/json';
         defaultFileName = state.targetFileName || 'fa.json';
@@ -1302,6 +2184,9 @@
       a.download = defaultFileName;
       a.click();
       URL.revokeObjectURL(url);
+      
+      // Auto-save version snapshot on export
+      VersionManager.addSnapshot(state.targetTranslations, `خروجی ${exportFormat.toUpperCase()}`);
       
       const progress = calculateProgress();
       showToast('فایل ترجمه خروجی گرفته شد', `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده`);
@@ -1325,15 +2210,237 @@
       updateUI();
     }
 
+    // ===== New Feature Handlers =====
+
+    // AI Translate with API
+    async function handleAITranslate() {
+      if (!TranslationService.config.googleApiKey && !TranslationService.config.deeplApiKey) {
+        showToast('تنظیمات API', 'لطفاً ابتدا کلید API را در تنظیمات وارد کنید.', 'destructive');
+        document.getElementById('settings-btn').click();
+        return;
+      }
+      
+      const targetLang = targetLanguages.current || 'fa';
+      const untranslated = Object.keys(state.sourceKeys).filter(
+        k => !state.targetTranslations[k] || state.targetTranslations[k].trim() === ''
+      );
+      
+      if (untranslated.length === 0) {
+        showToast('تمام رشته‌ها ترجمه شده‌اند!', 'هیچ رشته ترجمه نشده‌ای وجود ندارد.');
+        return;
+      }
+      
+      const btn = document.getElementById('ai-translate-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> در حال ترجمه...';
+      
+      try {
+        const entries = {};
+        untranslated.forEach(k => { entries[k] = state.sourceKeys[k]; });
+        
+        const results = await TranslationService.translateBatch(entries, targetLang, 'auto', (completed, total) => {
+          btn.innerHTML = `<div class="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> ${completed}/${total}`;
+        });
+        
+        Object.assign(state.targetTranslations, results);
+        VersionManager.addSnapshot(state.targetTranslations, 'ترجمه خودکار AI');
+        updateUI();
+        showToast('ترجمه خودکار کامل شد', `${toPersianNumber(untranslated.length)} رشته ترجمه شد.`);
+      } catch (err) {
+        showToast('خطا در ترجمه', err.message, 'destructive');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg> ترجمه هوشمند`;
+      }
+    }
+
+    // Batch Edit Functions
+    function openBatchEdit() {
+      document.getElementById('batch-edit-modal').classList.remove('hidden');
+      updateBatchCount();
+    }
+
+    function updateBatchCount() {
+      const untranslated = Object.keys(state.sourceKeys).filter(
+        k => !state.targetTranslations[k] || state.targetTranslations[k].trim() === ''
+      ).length;
+      document.getElementById('batch-count').textContent = toPersianNumber(untranslated);
+    }
+
+    function batchReplaceAll() {
+      const findText = document.getElementById('batch-find').value;
+      const replaceText = document.getElementById('batch-replace').value;
+      if (!findText) { showToast('متن جستجو را وارد کنید', '', 'default'); return; }
+      
+      let count = 0;
+      for (const key in state.sourceKeys) {
+        const current = state.targetTranslations[key] || '';
+        if (current.includes(findText)) {
+          state.targetTranslations[key] = current.replaceAll(findText, replaceText);
+          count++;
+        }
+      }
+      VersionManager.addSnapshot(state.targetTranslations, `جایگزینی: ${findText} → ${replaceText}`);
+      updateUI();
+      showToast('جایگزینی انجام شد', `${toPersianNumber(count)} رشته به‌روزرسانی شد.`);
+    }
+
+    function batchApplyPrefixSuffix() {
+      const prefix = document.getElementById('batch-prefix').value;
+      const suffix = document.getElementById('batch-suffix').value;
+      if (!prefix && !suffix) { showToast('پیشوند یا پسوند را وارد کنید', '', 'default'); return; }
+      
+      let count = 0;
+      for (const key in state.sourceKeys) {
+        if (!state.targetTranslations[key] || state.targetTranslations[key].trim() === '') {
+          const source = state.sourceKeys[key];
+          if (typeof source === 'string') {
+            state.targetTranslations[key] = prefix + source + suffix;
+            count++;
+          }
+        }
+      }
+      VersionManager.addSnapshot(state.targetTranslations, `اعمال پیشوند/پسوند`);
+      updateUI();
+      showToast('عملیات انجام شد', `${toPersianNumber(count)} رشته به‌روزرسانی شد.`);
+    }
+
+    function batchClearAll() {
+      if (!confirm('آیا از پاک کردن همه ترجمه‌ها اطمینان دارید؟')) return;
+      VersionManager.addSnapshot(state.targetTranslations, 'پشتیبان قبل از پاک کردن');
+      for (const key in state.targetTranslations) {
+        delete state.targetTranslations[key];
+      }
+      updateUI();
+      showToast('همه ترجمه‌ها پاک شدند');
+    }
+
+    // Diff View
+    function openDiffView() {
+      document.getElementById('diff-modal').classList.remove('hidden');
+      const sourceContainer = document.getElementById('diff-source');
+      const targetContainer = document.getElementById('diff-target');
+      sourceContainer.innerHTML = '';
+      targetContainer.innerHTML = '';
+      
+      const entries = Object.keys(state.sourceKeys).map(key => ({
+        key,
+        source: typeof state.sourceKeys[key] === 'string' ? state.sourceKeys[key] : JSON.stringify(state.sourceKeys[key]),
+        target: state.targetTranslations[key] || ''
+      }));
+      
+      entries.forEach(entry => {
+        const isDifferent = entry.source !== entry.target && entry.target.trim() !== '';
+        const sourceDiv = document.createElement('div');
+        sourceDiv.className = `text-xs p-2 rounded-lg border ${isDifferent ? 'border-slate-200 bg-slate-50' : 'border-slate-200 bg-slate-50'}`;
+        sourceDiv.innerHTML = `<div class="font-mono text-[10px] text-slate-400 mb-1 truncate">${entry.key}</div><div dir="ltr" class="whitespace-pre-wrap break-words">${entry.source || '<span class="text-slate-300 italic">خالی</span>'}</div>`;
+        sourceContainer.appendChild(sourceDiv);
+        
+        const targetDiv = document.createElement('div');
+        targetDiv.className = `text-xs p-2 rounded-lg border ${entry.target.trim() ? (isDifferent ? 'border-emerald-200 bg-emerald-50' : 'border-emerald-200 bg-emerald-50') : 'border-amber-200 bg-amber-50'}`;
+        targetDiv.innerHTML = `<div class="font-mono text-[10px] text-slate-400 mb-1 truncate">${entry.key}</div><div class="whitespace-pre-wrap break-words">${entry.target || '<span class="text-slate-400 italic">ترجمه نشده</span>'}</div>`;
+        targetContainer.appendChild(targetDiv);
+      });
+    }
+
+    // Language Management
+    function renderLanguageTabs() {
+      const container = document.getElementById('language-tabs');
+      container.innerHTML = '';
+      
+      for (const [code, lang] of Object.entries(targetLanguages.languages)) {
+        const isActive = code === targetLanguages.current;
+        const tab = document.createElement('button');
+        tab.className = `px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+          isActive ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        }`;
+        tab.innerHTML = `${lang.flag || ''} ${lang.name}`;
+        tab.addEventListener('click', () => {
+          // Save current before switching
+          targetLanguages.languages[targetLanguages.current].translations = 
+            JSON.parse(JSON.stringify(state.targetTranslations));
+          switchTargetLanguage(code);
+          renderLanguageTabs();
+        });
+        container.appendChild(tab);
+      }
+    }
+
+    // Version History
+    function renderVersionHistory() {
+      const container = document.getElementById('version-list');
+      const versions = VersionManager.getVersions();
+      
+      if (versions.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">هیچ نسخه‌ای ذخیره نشده است</p>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      versions.forEach(ver => {
+        const date = new Date(ver.timestamp);
+        const dateStr = date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 text-xs group';
+        div.innerHTML = `
+          <span class="h-1.5 w-1.5 rounded-full bg-violet-400 flex-shrink-0"></span>
+          <div class="flex-1 min-w-0">
+            <p class="text-slate-600 truncate">${ver.label}</p>
+            <p class="text-[10px] text-slate-400">${dateStr} | ${toPersianNumber(ver.translatedKeys)}/${toPersianNumber(ver.totalKeys)}</p>
+          </div>
+          <div class="hidden group-hover:flex gap-1">
+            <button class="restore-version-btn px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 text-[10px]" data-id="${ver.id}">بازیابی</button>
+            <button class="delete-version-btn px-1.5 py-0.5 rounded bg-red-100 text-red-600 text-[10px]" data-id="${ver.id}">✕</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+      
+      // Restore handlers
+      container.querySelectorAll('.restore-version-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const data = VersionManager.restore(parseInt(btn.dataset.id));
+          if (data) {
+            state.targetTranslations = data;
+            updateUI();
+            showToast('نسخه بازیابی شد');
+          }
+        });
+      });
+      
+      container.querySelectorAll('.delete-version-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          VersionManager.deleteVersion(parseInt(btn.dataset.id));
+          renderVersionHistory();
+        });
+      });
+    }
+
     // ===== Initialize =====
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // Load from storage FIRST
-      loadFromStorage();
-      
+    document.addEventListener('DOMContentLoaded', async () => {
       // Hide loading state
       document.getElementById('loading-state').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
+      
+      // Check for encryption first, then load storage
+      const encMeta = localStorage.getItem(STORAGE_KEY + '-enc-meta');
+      if (encMeta) {
+        const meta = JSON.parse(encMeta);
+        if (meta.enabled) {
+          EncryptionModule.enabled = true;
+          document.getElementById('encryption-status').classList.remove('hidden');
+          document.getElementById('toggle-encryption-btn').textContent = 'غیرفعال‌سازی';
+          const decrypted = await EncryptionModule.secureLoad();
+          if (decrypted) {
+            state = { ...state, ...decrypted };
+          }
+        } else {
+          loadFromStorage();
+        }
+      } else {
+        loadFromStorage();
+      }
       
       // Set up event listeners
       document.getElementById('source-file').addEventListener('change', handleSourceFile);
@@ -1347,8 +2454,163 @@
         document.getElementById('target-file').click();
       });
       
-      document.getElementById('export-btn').addEventListener('click', handleExport);
+      // Export dropdown
+      document.getElementById('export-btn').addEventListener('click', () => {
+        const dropdown = document.getElementById('export-dropdown');
+        dropdown.classList.toggle('hidden');
+      });
       
+      document.querySelectorAll('.export-format-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const format = btn.dataset.format;
+          handleExport(format);
+          document.getElementById('export-dropdown').classList.add('hidden');
+        });
+      });
+      
+      // Close export dropdown on outside click
+      document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('export-dropdown-wrapper');
+        const dropdown = document.getElementById('export-dropdown');
+        if (wrapper && !wrapper.contains(e.target)) {
+          dropdown?.classList.add('hidden');
+        }
+      });
+      
+      // AI Translate
+      document.getElementById('ai-translate-btn').addEventListener('click', handleAITranslate);
+      
+      // Batch Edit
+      document.getElementById('batch-edit-btn').addEventListener('click', openBatchEdit);
+      document.getElementById('close-batch-edit-btn').addEventListener('click', () => {
+        document.getElementById('batch-edit-modal').classList.add('hidden');
+      });
+      document.getElementById('batch-replace-all-btn').addEventListener('click', batchReplaceAll);
+      document.getElementById('batch-prefix-suffix-btn').addEventListener('click', batchApplyPrefixSuffix);
+      document.getElementById('batch-clear-all-btn').addEventListener('click', batchClearAll);
+      document.getElementById('select-all-btn').addEventListener('click', () => {
+        document.getElementById('batch-find').value = '';
+        document.getElementById('batch-replace').value = '';
+      });
+      document.getElementById('deselect-all-btn').addEventListener('click', () => {
+        document.getElementById('batch-find').value = '';
+        document.getElementById('batch-replace').value = '';
+        document.getElementById('batch-prefix').value = '';
+        document.getElementById('batch-suffix').value = '';
+      });
+      
+      // Diff View
+      document.getElementById('diff-view-btn').addEventListener('click', openDiffView);
+      document.getElementById('close-diff-btn').addEventListener('click', () => {
+        document.getElementById('diff-modal').classList.add('hidden');
+      });
+      
+      // Settings
+      document.getElementById('settings-btn').addEventListener('click', () => {
+        document.getElementById('settings-modal').classList.remove('hidden');
+        // Load current API config
+        if (TranslationService.config.preferredService === 'deepl') {
+          document.querySelector('input[name="api-service"][value="deepl"]').checked = true;
+        } else {
+          document.querySelector('input[name="api-service"][value="google"]').checked = true;
+        }
+        document.getElementById('api-key-input').value = TranslationService.config.googleApiKey || TranslationService.config.deeplApiKey || '';
+        document.getElementById('deepl-pro').checked = TranslationService.config.deeplIsPro;
+        document.getElementById('deepl-options').classList.toggle('hidden', TranslationService.config.preferredService !== 'deepl');
+        if (EncryptionModule.enabled) {
+          document.getElementById('encryption-status').classList.remove('hidden');
+        }
+      });
+      
+      document.getElementById('close-settings-btn').addEventListener('click', () => {
+        document.getElementById('settings-modal').classList.add('hidden');
+      });
+      
+      // Close modals on outside click
+      document.querySelectorAll('.fixed.inset-0').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) modal.classList.add('hidden');
+        });
+      });
+      
+      // API service radio toggle
+      document.querySelectorAll('input[name="api-service"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+          document.getElementById('deepl-options').classList.toggle('hidden', radio.value !== 'deepl');
+        });
+      });
+      
+      document.getElementById('save-api-btn').addEventListener('click', () => {
+        const service = document.querySelector('input[name="api-service"]:checked').value;
+        const apiKey = document.getElementById('api-key-input').value.trim();
+        
+        TranslationService.config.preferredService = service;
+        if (service === 'google') {
+          TranslationService.config.googleApiKey = apiKey;
+          TranslationService.config.deeplApiKey = '';
+        } else {
+          TranslationService.config.deeplApiKey = apiKey;
+          TranslationService.config.deeplIsPro = document.getElementById('deepl-pro').checked;
+          TranslationService.config.googleApiKey = '';
+        }
+        TranslationService.saveConfig();
+        showToast('تنظیمات API ذخیره شد', 'سرویس ترجمه خودکار پیکربندی شد.');
+      });
+      
+      // Encryption
+      document.getElementById('toggle-encryption-btn').addEventListener('click', async () => {
+        const password = document.getElementById('encryption-password').value;
+        if (!password) { showToast('رمز عبور را وارد کنید', '', 'default'); return; }
+        
+        if (EncryptionModule.enabled) {
+          EncryptionModule.enabled = false;
+          EncryptionModule.key = null;
+          document.getElementById('encryption-status').classList.add('hidden');
+          document.getElementById('toggle-encryption-btn').textContent = 'فعال‌سازی';
+          showToast('رمزگذاری غیرفعال شد');
+        } else {
+          await EncryptionModule.init(password);
+          document.getElementById('encryption-status').classList.remove('hidden');
+          document.getElementById('toggle-encryption-btn').textContent = 'غیرفعال‌سازی';
+          showToast('رمزگذاری فعال شد', 'داده‌های شما با AES-256-GCM رمز می‌شوند.');
+        }
+      });
+      
+      // Language
+      document.getElementById('add-language-btn').addEventListener('click', () => {
+        const select = document.getElementById('add-language-select');
+        const code = select.value;
+        if (!code) { showToast('زبان را انتخاب کنید', '', 'default'); return; }
+        
+        const langNames = {
+          'fa': ['فارسی', '🇮🇷'], 'en': ['English', '🇬🇧'], 'ar': ['العربية', '🇸🇦'],
+          'de': ['Deutsch', '🇩🇪'], 'fr': ['Français', '🇫🇷'], 'es': ['Español', '🇪🇸'],
+          'ru': ['Русский', '🇷🇺'], 'zh': ['中文', '🇨🇳'], 'ja': ['日本語', '🇯🇵'],
+          'ko': ['한국어', '🇰🇷'], 'tr': ['Türkçe', '🇹🇷'], 'ur': ['اردو', '🇵🇰'],
+          'hi': ['हिन्दी', '🇮🇳'], 'pt': ['Português', '🇧🇷'], 'it': ['Italiano', '🇮🇹']
+        };
+        
+        if (targetLanguages.languages[code]) {
+          showToast('این زبان قبلاً اضافه شده است', '', 'default');
+          return;
+        }
+        
+        const [name, flag] = langNames[code] || [code, ''];
+        addTargetLanguage(code, name, flag);
+        select.value = '';
+        renderLanguageTabs();
+        showToast(`زبان ${name} اضافه شد`);
+      });
+      
+      // Version History
+      document.getElementById('save-version-btn').addEventListener('click', () => {
+        VersionManager.addSnapshot(state.targetTranslations, 'ذخیره دستی');
+        renderVersionHistory();
+        showToast('نسخه ذخیره شد');
+      });
+      
+      // Search
       document.getElementById('search-input').addEventListener('input', (e) => {
         state.searchQuery = e.target.value;
         state.currentPage = 1;
@@ -1403,7 +2665,31 @@
       
       document.getElementById('clear-workspace').addEventListener('click', clearWorkspace);
       
-      // Initial UI update
+      // Override saveToStorage to support encryption
+      const originalSaveToStorage = saveToStorage;
+      saveToStorage = function() {
+        if (EncryptionModule.enabled && EncryptionModule.key) {
+          const data = {
+            sourceKeys: state.sourceKeys,
+            targetTranslations: state.targetTranslations,
+            sourceFileName: state.sourceFileName,
+            targetFileName: state.targetFileName,
+            sourceFileType: state.sourceFileType,
+            xmlMetadata: state.xmlMetadata,
+            filterMode: state.filterMode,
+            currentPage: state.currentPage,
+            pageSize: state.pageSize,
+            searchQuery: state.searchQuery
+          };
+          EncryptionModule.secureSave(data);
+        } else {
+          originalSaveToStorage();
+        }
+      };
+      
+      // Initial UI updates
+      renderLanguageTabs();
+      renderVersionHistory();
       updateUI();
     });
   </script>
