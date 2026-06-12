@@ -624,21 +624,33 @@
       return result;
     }
 
-    // Unflatten JSON object
+    // Unflatten JSON object with Prototype Pollution protection
     function unflattenJSON(flat) {
       const result = {};
+      const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype'];
+      
       for (const key in flat) {
+        if (!Object.prototype.hasOwnProperty.call(flat, key)) continue;
+        if (DANGEROUS_KEYS.some(dk => key.includes(dk))) continue;
+        
         const keys = key.split('.');
         let current = result;
+        
         for (let i = 0; i < keys.length - 1; i++) {
-          if (!current[keys[i]]) {
-            // Check if next key is numeric, create array
+          const k = keys[i];
+          if (DANGEROUS_KEYS.some(dk => k === dk)) continue;
+          
+          if (!current[k]) {
             const nextKey = keys[i + 1];
-            current[keys[i]] = !isNaN(parseInt(nextKey)) ? [] : {};
+            current[k] = !isNaN(parseInt(nextKey, 10)) ? [] : {};
           }
-          current = current[keys[i]];
+          current = current[k];
         }
-        current[keys[keys.length - 1]] = flat[key];
+        
+        const lastKey = keys[keys.length - 1];
+        if (!DANGEROUS_KEYS.some(dk => lastKey === dk)) {
+          current[lastKey] = flat[key];
+        }
       }
       return result;
     }
@@ -1065,7 +1077,8 @@
       for (const section in sections) {
         if (section !== '_global') ini += `\n[${section}]\n`;
         for (const key in sections[section]) {
-          ini += `${key}=${sections[section][key]}\n`;
+          const val = sections[section][key];
+          ini += `${key}=${typeof val === 'string' ? val : String(val)}\n`;
         }
       }
       return ini;
@@ -1098,22 +1111,26 @@
         enabled: true
       },
 
-loadConfig() {
+async loadConfig() {
          try {
            const saved = localStorage.getItem('translation-api-config');
            if (saved) {
-             // Try to decrypt first
-             const decrypted = EncryptionModule.decrypt ? EncryptionModule.decrypt(saved) : null;
-             const data = decrypted || JSON.parse(saved);
+             // Try to decrypt first (may be async)
+             let data = null;
+             if (EncryptionModule.enabled && EncryptionModule.key && EncryptionModule.decrypt) {
+               const decrypted = await EncryptionModule.decrypt(saved);
+               if (decrypted) data = JSON.parse(decrypted);
+             }
+             if (!data) data = JSON.parse(saved);
              this.config = { ...this.config, ...data };
            }
          } catch (e) { /* ignore */ }
        },
 
-saveConfig() {
+async saveConfig() {
          // Encrypt API keys before storage if encryption is enabled
          if (EncryptionModule.enabled && EncryptionModule.key) {
-           const encryptedData = EncryptionModule.encrypt(JSON.stringify({
+           const encryptedData = await EncryptionModule.encrypt(JSON.stringify({
              googleApiKey: this.config.googleApiKey,
              deeplApiKey: this.config.deeplApiKey,
              deeplIsPro: this.config.deeplIsPro,
@@ -1251,48 +1268,26 @@ saveConfig() {
       key: null,
       
       async init(password) {
-        const enc = new TextEncoder();
-        const keyMaterial = await crypto.subtle.importKey(
-          'raw', enc.encode(password),
-          { name: 'PBKDF2' }, false, ['deriveKey']
-        );
-        this.key = await crypto.subtle.deriveKey(
-          { name: 'PBKDF2', salt: enc.encode('translation-tool-salt'), iterations: 100000, hash: 'SHA-256' },
-          keyMaterial,
-          { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
-        );
-        this.enabled = true;
-      },
-      
-      async encrypt(data) {
-        if (!this.enabled || !this.key) return data;
-        const enc = new TextEncoder();
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const encrypted = await crypto.subtle.encrypt(
-          { name: 'AES-GCM', iv },
-          this.key, enc.encode(JSON.stringify(data))
-        );
-        const combined = new Uint8Array(iv.length + encrypted.byteLength);
-        combined.set(iv);
-        combined.set(new Uint8Array(encrypted), iv.length);
-        return btoa(String.fromCharCode(...combined));
-      },
-      
-      async decrypt(encoded) {
-        if (!this.enabled || !this.key) return null;
-        try {
-          const combined = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
-          const iv = combined.slice(0, 12);
-          const data = combined.slice(12);
-          const decrypted = await crypto.subtle.decrypt(
-            { name: 'AES-GCM', iv },
-            this.key, data
-          );
-          return JSON.parse(new TextDecoder().decode(decrypted));
-        } catch (e) {
-          console.error('Decryption failed:', e);
-          return null;
-        }
+         const enc = new TextEncoder();
+         const keyMaterial = await crypto.subtle.importKey(
+           'raw', enc.encode(password),
+           { name: 'PBKDF2' }, false, ['deriveKey']
+         );
+         // Use a random per-session salt (stored in localStorage for consistency across reloads)
+         const SALT_KEY = 'translation-tool-salt';
+         let saltBase64 = localStorage.getItem(SALT_KEY);
+         if (!saltBase64) {
+           const randomSalt = crypto.getRandomValues(new Uint8Array(16));
+           saltBase64 = btoa(String.fromCharCode(...randomSalt));
+           localStorage.setItem(SALT_KEY, saltBase64);
+         }
+         const saltBytes = Uint8Array.from(atob(saltBase64), c => c.charCodeAt(0));
+         this.key = await crypto.subtle.deriveKey(
+           { name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' },
+           keyMaterial,
+           { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+         );
+         this.enabled = true;
       },
       
       async secureSave(data) {
@@ -1338,21 +1333,24 @@ saveConfig() {
         localStorage.setItem('translation-versions', JSON.stringify(this.versions));
       },
       
-      addSnapshot(translations, label = '') {
-        this.load();
-        this.versions.push({
-          id: Date.now(),
-          timestamp: new Date().toISOString(),
-          label: label || `نسخه ${this.versions.length + 1}`,
-          data: JSON.parse(JSON.stringify(translations)),
-          totalKeys: Object.keys(translations).length,
-          translatedKeys: Object.keys(translations).filter(k => translations[k] && translations[k].trim()).length
-        });
-        if (this.versions.length > this.maxVersions) {
-          this.versions = this.versions.slice(-this.maxVersions);
-        }
-        this.save();
-      },
+addSnapshot(translations, label = '') {
+         this.load();
+         this.versions.push({
+           id: Date.now(),
+           timestamp: new Date().toISOString(),
+           label: label || `نسخه ${this.versions.length + 1}`,
+           data: JSON.parse(JSON.stringify(translations)),
+           totalKeys: Object.keys(translations).length,
+           translatedKeys: Object.keys(translations).filter(k => {
+             const v = translations[k];
+             return v !== undefined && v !== null && String(v).trim() !== '';
+           }).length
+         });
+         if (this.versions.length > this.maxVersions) {
+           this.versions = this.versions.slice(-this.maxVersions);
+         }
+         this.save();
+       },
       
       restore(versionId) {
         this.load();
@@ -1530,32 +1528,39 @@ saveConfig() {
       });
     }
 
-    function addTargetLanguage(code, name, flag = '') {
-      if (targetLanguages.languages[code]) return;
-      targetLanguages.languages[code] = {
-        name,
-        flag,
-        translations: {}
-      };
-      saveTargetLanguages();
-    }
+function addTargetLanguage(code, name, flag = '') {
+       if (targetLanguages.languages[code]) return;
+-      targetLanguages.languages[code] = {
+-        name,
+-        flag,
+-        translations: {}
+-      };
++      // Validate code to prevent prototype pollution
++      if (code === '__proto__' || code === 'constructor' || code === 'prototype') return;
++      
++      targetLanguages.languages[code] = { name, flag, translations: {} };
+       saveTargetLanguages();
+     }
 
-    function switchTargetLanguage(code) {
-      if (!targetLanguages.languages[code]) return;
-      
-      // Save current language translations
-      if (targetLanguages.current) {
-        targetLanguages.languages[targetLanguages.current].translations = 
-          JSON.parse(JSON.stringify(state.targetTranslations));
-      }
-      
-      targetLanguages.current = code;
-      state.targetTranslations = JSON.parse(
-        JSON.stringify(targetLanguages.languages[code].translations || {})
-      );
-      saveTargetLanguages();
-      updateUI();
-    }
+function switchTargetLanguage(code) {
+       // Prevent prototype pollution
+       if (code === '__proto__' || code === 'constructor' || code === 'prototype') return;
+       
+       if (!targetLanguages.languages[code]) return;
+       
+       // Save current language translations
+       if (targetLanguages.current) {
+         targetLanguages.languages[targetLanguages.current].translations = 
+           JSON.parse(JSON.stringify(state.targetTranslations));
+       }
+       
+       targetLanguages.current = code;
+       state.targetTranslations = JSON.parse(
+         JSON.stringify(targetLanguages.languages[code].translations || {})
+       );
+       saveTargetLanguages();
+       updateUI();
+     }
 
     function saveTargetLanguages() {
       // Save current language data before persisting
@@ -1669,13 +1674,16 @@ saveConfig() {
       for (const key in translations) {
         const value = translations[key];
         if (value !== undefined && value !== null) {
-          properties += `${key}=${value}\n`;
+          properties += `${key}=${typeof value === 'string' ? value : String(value)}\n`;
         }
       }
       return properties;
     }
 
     function escapeXML(str) {
+      if (typeof str !== 'string') {
+        str = str === null || str === undefined ? '' : String(str);
+      }
       return str
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -1755,21 +1763,21 @@ saveConfig() {
     let textareaRefs = new Map();
 
     // Load from localStorage
-    function loadFromStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const saved = JSON.parse(raw);
-          state = { ...state, ...saved };
-        }
-        // Load AI Translation config
-        TranslationService.loadConfig();
-        // Ensure badge reflects current state after loading config
-        updateAITranslationBadge();
-      } catch (e) {
-        console.error('Failed to load from storage:', e);
-      }
-    }
+async function loadFromStorage() {
+       try {
+         const raw = localStorage.getItem(STORAGE_KEY);
+         if (raw) {
+           const saved = JSON.parse(raw);
+           state = { ...state, ...saved };
+         }
+         // Load AI Translation config (async)
+         await TranslationService.loadConfig();
+         // Ensure badge reflects current state after loading config
+         updateAITranslationBadge();
+       } catch (e) {
+         console.error('Failed to load from storage:', e);
+       }
+     }
 
     // Save to localStorage
     function saveToStorage() {
@@ -1803,9 +1811,11 @@ saveConfig() {
 
     function calculateProgress() {
       const total = Object.keys(state.sourceKeys).length;
-      const translated = Object.keys(state.targetTranslations).filter(
-        k => state.targetTranslations[k] && state.targetTranslations[k].trim() !== ''
-      ).length;
+      const translated = Object.keys(state.targetTranslations).filter(k => {
+        const val = state.targetTranslations[k];
+        return val !== undefined && val !== null && String(val).trim() !== '';
+      }).length;
+      
       const missing = total - translated;
       const percentage = total > 0 ? Math.round((translated / total) * 100) : 0;
       
@@ -1824,46 +1834,30 @@ saveConfig() {
     }
 
     function getFilteredEntries() {
+      const query = (state.searchQuery || '').toLowerCase().trim();
+      
       return Object.keys(state.sourceKeys)
+        .filter(key => Object.prototype.hasOwnProperty.call(state.sourceKeys, key))
         .map(key => ({
           key,
           sourceValue: state.sourceKeys[key],
           targetValue: state.targetTranslations[key] || '',
-          isTranslated: !!state.targetTranslations[key] && (
-            typeof state.targetTranslations[key] === 'string'
-              ? state.targetTranslations[key].trim() !== ''
-              : Array.isArray(state.targetTranslations[key]) && state.targetTranslations[key].length > 0
-          )
+          isTranslated: state.targetTranslations[key] !== undefined && 
+                        state.targetTranslations[key] !== null && 
+                        String(state.targetTranslations[key]).trim() !== ''
         }))
         .filter(entry => {
           // Filter mode
           if (state.filterMode === 'missing' && entry.isTranslated) return false;
           if (state.filterMode === 'translated' && !entry.isTranslated) return false;
           
-          // Search filter - improved for array values
-          if (state.searchQuery) {
-            const q = state.searchQuery.toLowerCase();
-            // Handle array values more intelligently
-            let sourceStr, targetStr;
-            if (typeof entry.sourceValue === 'string') {
-              sourceStr = entry.sourceValue;
-            } else if (Array.isArray(entry.sourceValue)) {
-              sourceStr = entry.sourceValue.join(' ');
-            } else {
-              sourceStr = JSON.stringify(entry.sourceValue);
-            }
-            if (typeof entry.targetValue === 'string') {
-              targetStr = entry.targetValue;
-            } else if (Array.isArray(entry.targetValue)) {
-              targetStr = entry.targetValue.join(' ');
-            } else {
-              targetStr = JSON.stringify(entry.targetValue);
-            }
-            return (
-              entry.key.toLowerCase().includes(q) ||
-              sourceStr.toLowerCase().includes(q) ||
-              targetStr.toLowerCase().includes(q)
-            );
+          // Search filter - safe substring search for all types
+          if (query) {
+            const sourceStr = String(entry.sourceValue || '').toLowerCase();
+            const targetStr = String(entry.targetValue || '').toLowerCase();
+            const keyStr = String(entry.key || '').toLowerCase();
+            
+            return keyStr.includes(query) || sourceStr.includes(query) || targetStr.includes(query);
           }
           
           return true;
@@ -2404,7 +2398,7 @@ saveConfig() {
       
       const targetLang = targetLanguages.current || 'fa';
       const untranslated = Object.keys(state.sourceKeys).filter(
-        k => !state.targetTranslations[k] || state.targetTranslations[k].trim() === ''
+        k => !state.targetTranslations[k] || String(state.targetTranslations[k]).trim() === ''
       );
       
       if (untranslated.length === 0) {
@@ -2442,46 +2436,46 @@ saveConfig() {
       updateBatchCount();
     }
 
-    function updateBatchCount() {
-      const untranslated = Object.keys(state.sourceKeys).filter(
-        k => !state.targetTranslations[k] || state.targetTranslations[k].trim() === ''
-      ).length;
-      document.getElementById('batch-count').textContent = toPersianNumber(untranslated);
-    }
+function updateBatchCount() {
+       const untranslated = Object.keys(state.sourceKeys).filter(
+         k => !state.targetTranslations[k] || String(state.targetTranslations[k]).trim() === ''
+       ).length;
+       document.getElementById('batch-count').textContent = toPersianNumber(untranslated);
+     }
 
-    function batchReplaceAll() {
-      const findText = document.getElementById('batch-find').value;
-      const replaceText = document.getElementById('batch-replace').value;
-      if (!findText) { showToast('متن جستجو را وارد کنید', '', 'default'); return; }
-      
-      let count = 0;
-      for (const key in state.sourceKeys) {
-        const current = state.targetTranslations[key] || '';
-        if (current.includes(findText)) {
-          state.targetTranslations[key] = current.replaceAll(findText, replaceText);
-          count++;
-        }
-      }
+function batchReplaceAll() {
+       const findText = document.getElementById('batch-find').value;
+       const replaceText = document.getElementById('batch-replace').value;
+       if (!findText) { showToast('متن جستجو را وارد کنید', '', 'default'); return; }
+       
+       let count = 0;
+       for (const key in state.sourceKeys) {
+         const current = String(state.targetTranslations[key] || '');
+         if (current.includes(findText)) {
+           state.targetTranslations[key] = current.replaceAll(findText, replaceText);
+           count++;
+         }
+       }
       VersionManager.addSnapshot(state.targetTranslations, `جایگزینی: ${findText} → ${replaceText}`);
       updateUI();
       showToast('جایگزینی انجام شد', `${toPersianNumber(count)} رشته به‌روزرسانی شد.`);
     }
 
-    function batchApplyPrefixSuffix() {
-      const prefix = document.getElementById('batch-prefix').value;
-      const suffix = document.getElementById('batch-suffix').value;
-      if (!prefix && !suffix) { showToast('پیشوند یا پسوند را وارد کنید', '', 'default'); return; }
-      
-      let count = 0;
-      for (const key in state.sourceKeys) {
-        if (!state.targetTranslations[key] || state.targetTranslations[key].trim() === '') {
-          const source = state.sourceKeys[key];
-          if (typeof source === 'string') {
-            state.targetTranslations[key] = prefix + source + suffix;
-            count++;
-          }
-        }
-      }
+function batchApplyPrefixSuffix() {
+       const prefix = document.getElementById('batch-prefix').value;
+       const suffix = document.getElementById('batch-suffix').value;
+       if (!prefix && !suffix) { showToast('پیشوند یا پسوند را وارد کنید', '', 'default'); return; }
+       
+       let count = 0;
+       for (const key in state.sourceKeys) {
+         if (!state.targetTranslations[key] || String(state.targetTranslations[key]).trim() === '') {
+           const source = state.sourceKeys[key];
+           if (typeof source === 'string') {
+             state.targetTranslations[key] = prefix + source + suffix;
+             count++;
+           }
+         }
+       }
       VersionManager.addSnapshot(state.targetTranslations, `اعمال پیشوند/پسوند`);
       updateUI();
       showToast('عملیات انجام شد', `${toPersianNumber(count)} رشته به‌روزرسانی شد.`);
@@ -2498,52 +2492,32 @@ saveConfig() {
     }
 
     // Diff View
-    function openDiffView() {
-      document.getElementById('diff-modal').classList.remove('hidden');
-      const sourceContainer = document.getElementById('diff-source');
-      const targetContainer = document.getElementById('diff-target');
-      sourceContainer.innerHTML = '';
-      targetContainer.innerHTML = '';
-      
-      const entries = Object.keys(state.sourceKeys).map(key => ({
-        key,
-        source: typeof state.sourceKeys[key] === 'string' ? state.sourceKeys[key] : JSON.stringify(state.sourceKeys[key]),
-        target: state.targetTranslations[key] || ''
-      }));
-      
-      entries.forEach(entry => {
-        const isDifferent = entry.source !== entry.target && entry.target.trim() !== '';
-        const sourceDiv = document.createElement('div');
-        sourceDiv.className = `text-xs p-2 rounded-lg border ${isDifferent ? 'border-slate-200 bg-slate-50' : 'border-slate-200 bg-slate-50'}`;
-        sourceDiv.innerHTML = `<div class="font-mono text-[10px] text-slate-400 mb-1 truncate">${entry.key}</div><div dir="ltr" class="whitespace-pre-wrap break-words">${entry.source || '<span class="text-slate-300 italic">خالی</span>'}</div>`;
-        sourceContainer.appendChild(sourceDiv);
-        
-        const targetDiv = document.createElement('div');
-        targetDiv.className = `text-xs p-2 rounded-lg border ${entry.target.trim() ? (isDifferent ? 'border-emerald-200 bg-emerald-50' : 'border-emerald-200 bg-emerald-50') : 'border-amber-200 bg-amber-50'}`;
-        targetDiv.innerHTML = `<div class="font-mono text-[10px] text-slate-400 mb-1 truncate">${entry.key}</div><div class="whitespace-pre-wrap break-words">${entry.target || '<span class="text-slate-400 italic">ترجمه نشده</span>'}</div>`;
-        targetContainer.appendChild(targetDiv);
-      });
-    }
-
-    // Language Management
-    function renderLanguageTabs() {
-      const container = document.getElementById('language-tabs');
-      container.innerHTML = '';
-      
-      for (const [code, lang] of Object.entries(targetLanguages.languages)) {
-        const isActive = code === targetLanguages.current;
-        const tab = document.createElement('button');
-        tab.className = `px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-          isActive ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-        }`;
-        tab.innerHTML = `${lang.flag || ''} ${lang.name}`;
-        tab.addEventListener('click', () => {
-          // Save current before switching
-          targetLanguages.languages[targetLanguages.current].translations = 
-            JSON.parse(JSON.stringify(state.targetTranslations));
-          switchTargetLanguage(code);
-          renderLanguageTabs();
-        });
+function openDiffView() {
+       document.getElementById('diff-modal').classList.remove('hidden');
+       const sourceContainer = document.getElementById('diff-source');
+       const targetContainer = document.getElementById('diff-target');
+       sourceContainer.innerHTML = '';
+       targetContainer.innerHTML = '';
+       
+       const entries = Object.keys(state.sourceKeys).map(key => ({
+         key,
+         source: String(state.sourceKeys[key] || ''),
+         target: String(state.targetTranslations[key] || '')
+       }));
+       
+       entries.forEach(entry => {
+         const isDifferent = entry.source !== entry.target && entry.target.trim() !== '';
+         const sourceDiv = document.createElement('div');
+         sourceDiv.className = `text-xs p-2 rounded-lg border ${isDifferent ? 'border-slate-200 bg-slate-50' : 'border-slate-200 bg-slate-50'}`;
+         sourceDiv.innerHTML = `<div class="font-mono text-[10px] text-slate-400 mb-1 truncate">${escapeHtml(entry.key)}</div><div dir="ltr" class="whitespace-pre-wrap break-words">${entry.source || '<span class="text-slate-300 italic">خالی</span>'}</div>`;
+         sourceContainer.appendChild(sourceDiv);
+         
+         const targetDiv = document.createElement('div');
+         const targetHasValue = entry.target.trim() !== '';
+         targetDiv.className = `text-xs p-2 rounded-lg border ${targetHasValue ? (isDifferent ? 'border-emerald-200 bg-emerald-50' : 'border-emerald-200 bg-emerald-50') : 'border-amber-200 bg-amber-50'}`;
+         targetDiv.innerHTML = `<div class="font-mono text-[10px] text-slate-400 mb-1 truncate">${escapeHtml(entry.key)}</div><div class="whitespace-pre-wrap break-words">${entry.target || '<span class="text-slate-400 italic">ترجمه نشده</span>'}</div>`;
+         targetContainer.appendChild(targetDiv);
+       });
         container.appendChild(tab);
       }
     }
@@ -2618,10 +2592,10 @@ saveConfig() {
             state = { ...state, ...decrypted };
           }
         } else {
-          loadFromStorage();
+          await loadFromStorage();
         }
       } else {
-        loadFromStorage();
+        await loadFromStorage();
         // Sync AI translation badge after loading config
         updateAITranslationBadge();
       }
@@ -2725,13 +2699,13 @@ saveConfig() {
         });
       });
       
-      // AI Translation enabled toggle
-      document.getElementById('ai-translate-enabled').addEventListener('change', (e) => {
-        TranslationService.config.enabled = e.target.checked;
-        TranslationService.saveConfig();
-        updateAITranslationBadge();
-        showToast(e.target.checked ? 'ترجمه هوشمند فعال شد' : 'ترجمه هوشمند غیرفعال شد');
-      });
+// AI Translation enabled toggle
+       document.getElementById('ai-translate-enabled').addEventListener('change', async (e) => {
+         TranslationService.config.enabled = e.target.checked;
+         await TranslationService.saveConfig();
+         updateAITranslationBadge();
+         showToast(e.target.checked ? 'ترجمه هوشمند فعال شد' : 'ترجمه هوشمند غیرفعال شد');
+       });
       
       // API service radio toggle
       document.querySelectorAll('input[name="api-service"]').forEach(radio => {
@@ -2740,22 +2714,22 @@ saveConfig() {
         });
       });
       
-      document.getElementById('save-api-btn').addEventListener('click', () => {
-        const service = document.querySelector('input[name="api-service"]:checked').value;
-        const apiKey = document.getElementById('api-key-input').value.trim();
-        
-        TranslationService.config.preferredService = service;
-        if (service === 'google') {
-          TranslationService.config.googleApiKey = apiKey;
-          TranslationService.config.deeplApiKey = '';
-        } else {
-          TranslationService.config.deeplApiKey = apiKey;
-          TranslationService.config.deeplIsPro = document.getElementById('deepl-pro').checked;
-          TranslationService.config.googleApiKey = '';
-        }
-        TranslationService.saveConfig();
-        showToast('تنظیمات API ذخیره شد', 'سرویس ترجمه خودکار پیکربندی شد.');
-      });
+document.getElementById('save-api-btn').addEventListener('click', async () => {
+         const service = document.querySelector('input[name="api-service"]:checked').value;
+         const apiKey = document.getElementById('api-key-input').value.trim();
+         
+         TranslationService.config.preferredService = service;
+         if (service === 'google') {
+           TranslationService.config.googleApiKey = apiKey;
+           TranslationService.config.deeplApiKey = '';
+         } else {
+           TranslationService.config.deeplApiKey = apiKey;
+           TranslationService.config.deeplIsPro = document.getElementById('deepl-pro').checked;
+           TranslationService.config.googleApiKey = '';
+         }
+         await TranslationService.saveConfig();
+         showToast('تنظیمات API ذخیره شد', 'سرویس ترجمه خودکار پیکربندی شد.');
+       });
       
       // Encryption
       document.getElementById('toggle-encryption-btn').addEventListener('click', async () => {
