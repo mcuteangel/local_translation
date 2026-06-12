@@ -8,11 +8,12 @@
   <meta name="description"
     content="ابزار ترجمه محلی برای فایل‌های JSON, XML, YAML, Properties, CSV, INI و PO با هوش مصنوعی" />
   <title>ابزار ترجمه محلی</title>
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://translation.googleapis.com https://api-free.deepl.com https://api.deepl.com; img-src 'self' data:;">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
   <style>
     * {
-      font-family: "Vazirmatn", system-ui, sans-serif;
+      font-family: "Vazirmatn", "Segoe UI", system-ui, sans-serif;
     }
 
     textarea {
@@ -605,8 +606,18 @@
           </div>
           <div class="space-y-2">
             <label class="text-xs text-slate-600">کلید API</label>
-            <input type="password" id="api-key-input" placeholder="کلید API خود را وارد کنید"
-              class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <div class="relative">
+              <input type="password" id="api-key-input" placeholder="کلید API خود را وارد کنید"
+                class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 pr-9 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <button type="button" id="toggle-api-key-visibility"
+                class="absolute left-1.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label="نمایش/مخفی کردن کلید API">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+              </button>
+            </div>
           </div>
           <div id="deepl-options" class="hidden space-y-2">
             <label class="flex items-center gap-2 text-xs text-slate-600">
@@ -617,6 +628,9 @@
           <button id="save-api-btn" class="px-4 py-2 bg-violet-600 text-white text-xs rounded-lg hover:bg-violet-700">
             ذخیره تنظیمات API
           </button>
+          <p class="text-[10px] text-amber-500 bg-amber-50 px-2 py-1.5 rounded-lg leading-relaxed">
+            ⚠️ کلید API شما فقط در مرورگر خودتان ذخیره می‌شود و به هیچ سرور واسطی ارسال نخواهد شد. برای حذف امن آن، از دکمه "پاک کردن فضای کار" استفاده کنید.
+          </p>
         </div>
 
         <div class="h-px bg-slate-200"></div>
@@ -763,8 +777,6 @@
 
   <script>
     // ===== Utility Functions =====
-
-    // Debounce utility for performance optimization
     function debounce(func, wait) {
       let timeout;
       return function executedFunction(...args) {
@@ -807,7 +819,7 @@
 
     // Flatten nested JSON object using iterative stack approach for performance
     function flattenJSON(obj, prefix = "") {
-      const result = {};
+      const result = Object.create(null);
       const stack = [{ obj, prefix }];
 
       while (stack.length > 0) {
@@ -1043,11 +1055,23 @@
       return { flat, metadata: [] };
     }
 
+    function safelyParseXMLContent(rawXmlText) {
+      if (/<!DOCTYPE|<!ENTITY/i.test(rawXmlText)) {
+        throw new Error("خطای امنیتی: استفاده از تعریف‌های DTD یا External Entities مجاز نیست.");
+      }
+
+      const xmlParser = new DOMParser();
+      const documentParsed = xmlParser.parseFromString(rawXmlText, "text/xml");
+
+      if (documentParsed.getElementsByTagName("parsererror").length > 0) {
+        throw new Error("ساختار فایل XML معتبر نیست.");
+      }
+      return documentParsed;
+    }
+
     function parseXML(content) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(content, "text/xml");
-      const parseError = doc.querySelector("parsererror");
-      if (parseError || !doc.querySelector("resources")) {
+      const doc = safelyParseXMLContent(content);
+      if (!doc.querySelector("resources")) {
         throw new Error("Invalid Android XML format");
       }
 
@@ -1068,7 +1092,7 @@
 
         plural.querySelectorAll("item").forEach((item) => {
           const quantity = item.getAttribute("quantity") || "other";
-          flat[baseName][quantity] = item.textContent || "";
+          safeAssignDeepProperty(flat, baseName, quantity, item.textContent || "");
         });
 
         metadata.push({
@@ -1135,11 +1159,23 @@
       return { flat, metadata: [] };
     }
 
+    // Lazy line generator to avoid blocking on large content
+    function* lineGenerator(content) {
+      let startIndex = 0;
+      while (startIndex < content.length) {
+        const endIndex = content.indexOf("\n", startIndex);
+        if (endIndex === -1) {
+          yield content.substring(startIndex);
+          break;
+        }
+        yield content.substring(startIndex, endIndex);
+        startIndex = endIndex + 1;
+      }
+    }
+
     // Parse CSV content with basic quote support
     function parseCSV(content) {
       const flat = {};
-      const lines = content.split("\n");
-      if (lines.length < 2) return { flat, metadata: [] };
 
       function parseCSVLine(line, sep) {
         const row = [];
@@ -1172,8 +1208,10 @@
         return row;
       }
 
-      // Determine separator (comma, semicolon, or tab) from first data row
-      const firstLine = lines[0].trim();
+      const lines = lineGenerator(content);
+      const firstResult = lines.next();
+      if (firstResult.done) return { flat, metadata: [] };
+      const firstLine = firstResult.value.trim();
       if (!firstLine) return { flat, metadata: [] };
 
       let sep = ",";
@@ -1193,13 +1231,20 @@
         if (!parts.length) return null;
         const key = parts[0];
         if (!key) return null;
-        const val = parts.length > 1 ? parts.slice(1).join(sep) : "";
+        let val = parts.length > 1 ? parts.slice(1).join(sep) : "";
+        if (/^[=\+\-\@\t\r]/.test(val)) {
+          val = val.replace(/^[=\+\-\@\t\r\s]+/, "");
+        }
         return { key, val };
       };
 
       if (!isHeaderRow) {
-        for (let i = 0; i < lines.length; i++) {
-          const row = extractRow(lines[i]);
+        // Process first line already read
+        const firstRow = extractRow(firstLine);
+        if (firstRow) setSafeFlatValue(flat, firstRow.key, firstRow.val);
+
+        for (const line of lines) {
+          const row = extractRow(line);
           if (row) setSafeFlatValue(flat, row.key, row.val);
         }
       } else {
@@ -1210,10 +1255,10 @@
           /^(value|text|translation|مقدار|ترجمه)$/i.test(h.trim()),
         );
 
-        for (let i = 1; i < lines.length; i++) {
-          const row = extractRow(lines[i]);
+        for (const line of lines) {
+          const row = extractRow(line);
           if (!row) continue;
-          const parts = parseCSVLine(lines[i], sep);
+          const parts = parseCSVLine(line, sep);
 
           const getValue = (columnIndex) => {
             if (columnIndex < 0 || columnIndex >= parts.length) return "";
@@ -1329,19 +1374,21 @@
     }
 
     // Serialize to CSV format
+    function escapeForCSV(val) {
+      let output = typeof val === "string" ? val : String(val || "");
+      if (/^[=\+\-\@\t\r]/.test(output)) {
+        output = "\t" + output;
+      }
+      return '"' + output.replace(/"/g, '""') + '"';
+    }
+
     function serializeCSV(translations) {
       let csv = "key,value\n";
       for (const key in translations) {
         const value = translations[key];
         if (value !== undefined && value !== null) {
-          const escapedKey =
-            key.includes(",") || key.includes('"')
-              ? `"${key.replace(/"/g, '""')}"`
-              : key;
-          const escapedValue =
-            String(value).includes(",") || String(value).includes('"')
-              ? `"${String(value).replace(/"/g, '""')}"`
-              : value;
+          const escapedKey = escapeForCSV(key);
+          const escapedValue = escapeForCSV(value);
           csv += `${escapedKey},${escapedValue}\n`;
         }
       }
@@ -1628,18 +1675,22 @@
           const batch = keys.slice(i, i + BATCH_SIZE);
           const promises = batch.map(async (key) => {
             try {
-              results[key] = await this.translate(
-                entries[key],
-                targetLang,
-                sourceLang,
-              );
+              return { key, value: await this.translate(entries[key], targetLang, sourceLang) };
             } catch (e) {
-              results[key] = entries[key]; // fallback to original
+              return { key, value: entries[key] };
+            }
+          });
+          const settled = await Promise.allSettled(promises);
+          settled.forEach((result, idx) => {
+            const actualKey = batch[idx];
+            if (result.status === "fulfilled") {
+              results[actualKey] = result.value.value;
+            } else {
+              results[actualKey] = entries[actualKey];
             }
             completed++;
             if (onProgress) onProgress(completed, keys.length);
           });
-          await Promise.all(promises);
         }
         return results;
       },
@@ -1700,7 +1751,7 @@
         const shouldRotateSalt =
           !saltBase64 ||
           !saltMeta ||
-          saltMeta.iterations !== 100000 ||
+          saltMeta.iterations !== 600000 ||
           Date.now() - saltMeta.createdAt > 1000 * 60 * 60 * 24 * 30;
 
         if (shouldRotateSalt) {
@@ -1711,7 +1762,7 @@
             saltMetaKey,
             JSON.stringify({
               createdAt: Date.now(),
-              iterations: 100000,
+              iterations: 600000,
             }),
           );
         }
@@ -1723,7 +1774,7 @@
           {
             name: "PBKDF2",
             salt: saltBytes,
-            iterations: 100000,
+            iterations: 600000,
             hash: "SHA-256",
           },
           keyMaterial,
@@ -1830,7 +1881,7 @@
           id: Date.now(),
           timestamp: new Date().toISOString(),
           label: label || `نسخه ${this.versions.length + 1}`,
-          data: JSON.parse(JSON.stringify(translations)),
+          data: typeof structuredClone !== "undefined" ? structuredClone(translations) : JSON.parse(JSON.stringify(translations)),
           totalKeys: Object.keys(translations).length,
           translatedKeys: Object.keys(translations).filter((k) => {
             const v = translations[k];
@@ -1846,7 +1897,7 @@
       restore(versionId) {
         this.load();
         const version = this.versions.find((v) => v.id === versionId);
-        return version ? JSON.parse(JSON.stringify(version.data)) : null;
+        return version ? (typeof structuredClone !== "undefined" ? structuredClone(version.data) : JSON.parse(JSON.stringify(version.data))) : null;
       },
 
       getVersions() {
@@ -1922,6 +1973,36 @@
       },
     });
 
+    // ===== Safe DOM Creation Utilities =====
+
+    function createSafeRow(key, value, isTranslated = false) {
+      const container = document.createElement("div");
+      container.className = `p-4 border rounded-xl bg-white space-y-2 ${isTranslated ? "border-emerald-200" : "border-amber-200"}`;
+
+      const keyLabel = document.createElement("div");
+      keyLabel.className = "text-xs font-mono text-slate-500 select-all";
+      keyLabel.textContent = key;
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "w-full border border-slate-200 rounded-lg p-2 text-sm";
+      textarea.value = value || "";
+      textarea.placeholder = "ترجمه...";
+      textarea.dir = "auto";
+
+      container.appendChild(keyLabel);
+      container.appendChild(textarea);
+      return container;
+    }
+
+    function renderRowsSafely(container, entries, createRowFn) {
+      const fragment = document.createDocumentFragment();
+      entries.forEach((entry) => {
+        fragment.appendChild(createRowFn(entry));
+      });
+      container.innerHTML = "";
+      container.appendChild(fragment);
+    }
+
     // ===== Virtual Scroller for Performance =====
 
     class VirtualScroller {
@@ -1937,6 +2018,12 @@
       }
 
       setItems(items) {
+        if (this.wrapper) {
+          while (this.wrapper.firstChild) {
+            this.wrapper.firstChild.remove();
+          }
+          this.wrapper.remove();
+        }
         this.items = items;
         this.container.innerHTML = "";
         if (items.length === 0) return;
@@ -1971,7 +2058,7 @@
         // Remove old children
         while (this.wrapper.firstChild) this.wrapper.firstChild.remove();
 
-        // Render visible items
+        // Render visible items using safe DOM methods
         for (let i = startIdx; i < endIdx; i++) {
           const el = document.createElement("div");
           el.style.position = "absolute";
@@ -1979,7 +2066,12 @@
           el.style.left = "0";
           el.style.right = "0";
           el.style.height = `${this.itemHeight}px`;
-          el.innerHTML = this.renderItem(this.items[i], i);
+          const content = this.renderItem(this.items[i], i);
+          if (typeof content === "string") {
+            el.textContent = content;
+          } else if (content instanceof Node) {
+            el.appendChild(content);
+          }
           this.wrapper.appendChild(el);
         }
 
@@ -1988,6 +2080,11 @@
 
       destroy() {
         this.container.removeEventListener("scroll", this._scrollHandler);
+        this.container = null;
+        this.items = [];
+        this.wrapper = null;
+        this.renderItem = null;
+        this.onRender = null;
       }
     }
 
@@ -1995,11 +2092,21 @@
       if (value === null || value === undefined) return {};
       if (Array.isArray(value)) return [];
       if (typeof value !== "object") return value;
-      return JSON.parse(JSON.stringify(value));
+      return typeof structuredClone !== "undefined" ? structuredClone(value) : JSON.parse(JSON.stringify(value));
     }
 
     function isDangerousKey(key) {
       return key === "__proto__" || key === "constructor" || key === "prototype";
+    }
+
+    function safeAssignDeepProperty(target, base, key, val) {
+      if (isDangerousKey(base) || isDangerousKey(key)) return;
+      if (!target[base]) {
+        target[base] = Object.create(null);
+      } else if (typeof target[base] !== 'object' || target[base] === null) {
+        return;
+      }
+      target[base][key] = val;
     }
 
     function isDangerousFlatKey(key) {
@@ -2018,9 +2125,9 @@
     function isValidLanguageCode(code) {
       return (
         typeof code === "string" &&
-        code.length > 0 &&
-        code.length <= 20 &&
-        /^[a-z]{2}(-[A-Za-z0-9]{2,8})?$/i.test(code) &&
+        code.length >= 2 &&
+        code.length <= 10 &&
+        /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$/i.test(code) &&
         !isDangerousKey(code)
       );
     }
@@ -2370,19 +2477,94 @@
 
     const STORAGE_KEY = "translation-tool-workspace";
 
-    let state = {
-      sourceKeys: {},
-      targetTranslations: {},
-      sourceFileName: "",
-      targetFileName: "",
-      sourceFileType: "json",
-      targetFileType: "",
-      xmlMetadata: [],
-      filterMode: "all",
-      currentPage: 1,
-      pageSize: 25,
-      searchQuery: "",
-    };
+    class TranslationWorkspace {
+      constructor() {
+        this.sourceKeys = {};
+        this.targetTranslations = {};
+        this.sourceFileName = "";
+        this.targetFileName = "";
+        this.sourceFileType = "json";
+        this.targetFileType = "";
+        this.xmlMetadata = [];
+        this.filterMode = "all";
+        this.currentPage = 1;
+        this.pageSize = 25;
+        this.searchQuery = "";
+      }
+
+      setFilter(mode) {
+        this.filterMode = mode;
+        this.currentPage = 1;
+        this.dispatch();
+      }
+
+      setSearch(query) {
+        this.searchQuery = query;
+        this.currentPage = 1;
+        this.dispatch();
+      }
+
+      setPageSize(size) {
+        this.pageSize = size;
+        this.currentPage = 1;
+        this.dispatch();
+      }
+
+      goToPage(page) {
+        this.currentPage = page;
+        this.dispatch();
+      }
+
+      getPaginatedEntries(entries) {
+        const start = (this.currentPage - 1) * this.pageSize;
+        return entries.slice(start, start + this.pageSize);
+      }
+
+      dispatch() {
+        if (typeof window.updateUI === "function") {
+          window.updateUI();
+        }
+      }
+
+      clone() {
+        return typeof structuredClone !== "undefined"
+          ? structuredClone(this)
+          : JSON.parse(JSON.stringify(this));
+      }
+
+      restore(payload) {
+        if (!payload || typeof payload !== "object") return;
+        if (payload.sourceKeys && typeof payload.sourceKeys === "object")
+          this.sourceKeys = payload.sourceKeys;
+        if (payload.targetTranslations && typeof payload.targetTranslations === "object")
+          this.targetTranslations = payload.targetTranslations;
+        if (typeof payload.sourceFileName === "string") this.sourceFileName = payload.sourceFileName;
+        if (typeof payload.targetFileName === "string") this.targetFileName = payload.targetFileName;
+        if (typeof payload.sourceFileType === "string") this.sourceFileType = payload.sourceFileType;
+        if (typeof payload.targetFileType === "string") this.targetFileType = payload.targetFileType;
+        if (Array.isArray(payload.xmlMetadata)) this.xmlMetadata = payload.xmlMetadata;
+        if (["all", "missing", "translated"].includes(payload.filterMode)) this.filterMode = payload.filterMode;
+        if (Number.isFinite(payload.currentPage)) this.currentPage = payload.currentPage;
+        if ([25, 50, 100].includes(payload.pageSize)) this.pageSize = payload.pageSize;
+        if (typeof payload.searchQuery === "string") this.searchQuery = payload.searchQuery;
+      }
+
+      reset() {
+        this.sourceKeys = {};
+        this.targetTranslations = {};
+        this.sourceFileName = "";
+        this.targetFileName = "";
+        this.sourceFileType = "json";
+        this.targetFileType = "";
+        this.xmlMetadata = [];
+        this.filterMode = "all";
+        this.currentPage = 1;
+        this.pageSize = 25;
+        this.searchQuery = "";
+      }
+    }
+
+    let state = new TranslationWorkspace();
 
     const WorkspaceStorage = {
       buildPayload() {
@@ -2405,36 +2587,35 @@
       },
 
       normalizePayload(payload) {
-        const safe = { ...state };
-        if (!payload || typeof payload !== "object") return safe;
-
-        safe.sourceKeys =
+        if (!payload || typeof payload !== "object") return new TranslationWorkspace();
+        const restored = new TranslationWorkspace();
+        restored.sourceKeys =
           payload.sourceKeys && typeof payload.sourceKeys === "object"
             ? payload.sourceKeys
             : {};
-        safe.targetTranslations =
+        restored.targetTranslations =
           payload.targetTranslations &&
-          typeof payload.targetTranslations === "object"
+            typeof payload.targetTranslations === "object"
             ? payload.targetTranslations
             : {};
-        safe.sourceFileName = String(payload.sourceFileName || "");
-        safe.targetFileName = String(payload.targetFileName || "");
-        safe.sourceFileType = String(payload.sourceFileType || "json");
-        safe.targetFileType = String(payload.targetFileType || "");
-        safe.xmlMetadata = Array.isArray(payload.xmlMetadata)
+        restored.sourceFileName = String(payload.sourceFileName || "");
+        restored.targetFileName = String(payload.targetFileName || "");
+        restored.sourceFileType = String(payload.sourceFileType || "json");
+        restored.targetFileType = String(payload.targetFileType || "");
+        restored.xmlMetadata = Array.isArray(payload.xmlMetadata)
           ? payload.xmlMetadata
           : [];
-        safe.filterMode = ["all", "missing", "translated"].includes(
+        restored.filterMode = ["all", "missing", "translated"].includes(
           payload.filterMode,
         )
           ? payload.filterMode
           : "all";
-        safe.currentPage = Math.max(1, parseInt(payload.currentPage, 10) || 1);
-        safe.pageSize = [25, 50, 100].includes(parseInt(payload.pageSize, 10))
+        restored.currentPage = Math.max(1, parseInt(payload.currentPage, 10) || 1);
+        restored.pageSize = [25, 50, 100].includes(parseInt(payload.pageSize, 10))
           ? parseInt(payload.pageSize, 10)
           : 25;
-        safe.searchQuery = String(payload.searchQuery || "");
-        return safe;
+        restored.searchQuery = String(payload.searchQuery || "");
+        return restored;
       },
 
       async save() {
@@ -2461,17 +2642,39 @@
           return null;
         }
       },
+
+      async save() {
+        const payload = this.buildPayload();
+        try {
+          if (EncryptionModule.enabled && EncryptionModule.key) {
+            await EncryptionModule.secureSave(payload);
+          } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            EncryptionModule.clear();
+          }
+        } catch (e) {
+          console.error("Failed to save workspace:", e);
+        }
+      },
     };
 
     let copiedKey = null;
     let copiedToTranslationKey = null;
     let textareaRefs = new Map();
 
+    const StorageController = {
+      save() {
+        WorkspaceStorage.save().catch((e) => {
+          console.error("Failed to save to storage:", e);
+        });
+      },
+    };
+
     async function loadFromStorage() {
       try {
         const saved = await WorkspaceStorage.loadPlain();
         if (saved) {
-          state = saved;
+          state.restore(saved);
         }
         await TranslationService.loadConfig();
         updateAITranslationBadge();
@@ -2481,9 +2684,7 @@
     }
 
     function saveToStorage() {
-      WorkspaceStorage.save().catch((e) => {
-        console.error("Failed to save to storage:", e);
-      });
+      StorageController.save();
     }
 
     // ===== UI Functions =====
@@ -2496,10 +2697,18 @@
         variant === "destructive" ? "bg-red-500" : "bg-slate-800";
 
       toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg max-w-sm`;
-      toast.innerHTML = `
-        <div class="font-medium text-sm">${escapeHtml(title)}</div>
-        ${description ? `<div class="text-xs opacity-90 mt-1">${escapeHtml(description)}</div>` : ""}
-      `;
+
+      const titleEl = document.createElement("div");
+      titleEl.className = "font-medium text-sm";
+      titleEl.textContent = title;
+      toast.appendChild(titleEl);
+
+      if (description) {
+        const descEl = document.createElement("div");
+        descEl.className = "text-xs opacity-90 mt-1";
+        descEl.textContent = description;
+        toast.appendChild(descEl);
+      }
 
       container.appendChild(toast);
 
@@ -2700,8 +2909,11 @@
       const allFilteredEntries = getFilteredEntries();
 
       // Update results count
-      document.getElementById("results-count").textContent =
-        `${toPersianNumber(allFilteredEntries.length)} رشته${state.searchQuery ? ` برای "${state.searchQuery}"` : ""}`;
+      const resultsCount = document.getElementById("results-count");
+      const filteredCount = toPersianNumber(allFilteredEntries.length);
+      resultsCount.textContent = state.searchQuery
+        ? `${filteredCount} رشته برای «${state.searchQuery}»`
+        : `${filteredCount} رشته`;
 
       // Show/hide page size selector
       document
@@ -2747,22 +2959,26 @@
           `صفحه ${toPersianNumber(safeCurrentPage)} از ${toPersianNumber(totalPages)}`;
 
         const pageNumbers = document.getElementById("page-numbers");
-        pageNumbers.innerHTML = "";
+        const pageFrag = document.createDocumentFragment();
 
         generatePageNumbers(safeCurrentPage, totalPages).forEach((page) => {
           if (page === "...") {
-            pageNumbers.innerHTML +=
-              '<span class="px-1 text-slate-400 text-xs">...</span>';
+            const ellipsis = document.createElement("span");
+            ellipsis.className = "px-1 text-slate-400 text-xs";
+            ellipsis.textContent = "...";
+            pageFrag.appendChild(ellipsis);
           } else {
             const isActive = page === safeCurrentPage;
-            pageNumbers.innerHTML += `
-              <button class="page-btn h-8 min-w-[2rem] rounded-md text-xs font-medium transition-colors ${isActive
-                ? "bg-emerald-600 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-              }" data-page="${page}">${toPersianNumber(page)}</button>
-            `;
+            const btn = document.createElement("button");
+            btn.className = `page-btn h-8 min-w-[2rem] rounded-md text-xs font-medium transition-colors ${isActive ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"}`;
+            btn.dataset.page = page;
+            btn.textContent = toPersianNumber(page);
+            pageFrag.appendChild(btn);
           }
         });
+
+        pageNumbers.innerHTML = "";
+        pageNumbers.appendChild(pageFrag);
       } else {
         pagination.classList.add("hidden");
       }
@@ -2804,34 +3020,9 @@
       const div = document.createElement("div");
       const isPlural = entry.key.includes("[");
 
-      // Escape all user-provided content to prevent XSS
       const safeSourceValue = escapeHtml(entry.sourceValue);
       const safeTargetValue = escapeHtml(entry.targetValue);
       const safeKey = escapeHtml(entry.key);
-
-      let keyDisplay;
-      if (isPlural) {
-        const parts = entry.key.split("[");
-        const match = entry.key.match(/\[(.+?)\]/);
-        keyDisplay = `
-          <span class="text-violet-600">${escapeHtml(parts[0])}</span>
-          <span class="text-slate-400">[</span>
-          <span class="text-amber-600">${escapeHtml(match ? match[1] : "")}</span>
-          <span class="text-slate-400">]</span>
-        `;
-      } else {
-        keyDisplay = safeKey;
-      }
-
-      // Handle array values for display with escaping
-      const sourceDisplay = Array.isArray(entry.sourceValue)
-        ? entry.sourceValue
-          .map(
-            (v, i) =>
-              `<div class="py-0.5 border-b border-slate-100 last:border-0">[${escapeHtml(i)}]<span dir="ltr"> ${escapeHtml(v)}</span></div>`,
-          )
-          .join("")
-        : safeSourceValue;
 
       const specialChars = Array.isArray(entry.sourceValue)
         ? []
@@ -2842,167 +3033,142 @@
         : "border-amber-200 bg-amber-50/30"
         }`;
 
-      div.innerHTML = `
-        <div class="flex items-center gap-2 px-3 py-1.5 border-b border-slate-100">
-          <code dir="ltr" class="text-[11px] text-slate-500 font-mono flex-1 truncate text-left">${keyDisplay}</code>
-          ${Array.isArray(entry.sourceValue) ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">آرایه</span>' : ""}
-          <div class="flex items-center gap-1">
-            <button class="copy-source-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors" title="کپی متن مبدا">
-              ${copiedKey === entry.key
-          ? '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
-          : '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>'
-        }
-            </button>
-            ${!Array.isArray(entry.sourceValue)
-          ? `
-            <button class="copy-to-translation-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-emerald-600 transition-colors" title="کپی متن مبدا به ترجمه">
-              ${copiedToTranslationKey === entry.key
-            ? '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
-            : '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>'
-          }
-            </button>
-            `
-          : ""
-        }
-          </div>
-          <span class="text-[9px] px-1.5 py-0.5 rounded-full font-medium ${entry.isTranslated
-          ? "bg-emerald-100 text-emerald-700"
-          : "bg-amber-100 text-amber-700"
-        }">${entry.isTranslated ? "ترجمه شده" : "ترجمه نشده"}</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-0">
-          <div class="px-3 py-2 border-b sm:border-b-0 sm:border-l border-slate-100">
-            <div dir="ltr" class="bg-slate-50 border border-slate-150 rounded px-2.5 py-1.5 text-sm text-slate-700 min-h-[2rem] max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-left">
-              ${sourceDisplay || '<span class="text-slate-400 italic">خالی</span>'}
-            </div>
-            ${specialChars.length > 0
-          ? `
-              <div class="flex flex-wrap gap-1 mt-1.5">
-                ${specialChars
-            .map(
-              (char) =>
-                `<button class="special-char-btn dir-ltr inline-flex items-center px-1.5 py-0.5 text-[11px] font-mono bg-violet-50 text-violet-700 border border-violet-200 rounded hover:bg-violet-100 hover:border-violet-300 transition-colors cursor-pointer" title="درج ${escapeHtml(char)} در محل نشانگر">${escapeHtml(char)}</button>`,
-            )
-            .join("")}
-              </div>
-            `
-          : ""
-        }
-</div>
-           <div class="px-3 py-2">
-             ${Array.isArray(entry.sourceValue)
-          ? `<div class="text-sm text-slate-500 italic bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">آرایه‌ها در این نسخه فقط خوانده‌شده‌اند. برای ویرایش، فایل XML را مستقیماً ویرایش کنید.</div>`
-          : `<textarea 
-                   data-key="${CSS.escape(entry.key)}"
-                   class="translation-input w-full text-sm min-h-[2.5rem] resize-y leading-relaxed border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                   placeholder="ترجمه..."
-                   dir="auto"
-                 >${safeTargetValue}</textarea>`
-        }
-          </div>
-        </div>
-      `;
+      // === Header row ===
+      const header = document.createElement("div");
+      header.className = "flex items-center gap-2 px-3 py-1.5 border-b border-slate-100";
 
-      // Event listeners
-      const copySourceBtn = div.querySelector(".copy-source-btn");
-      copySourceBtn.addEventListener("click", () => {
-        const textToCopy = Array.isArray(entry.sourceValue)
-          ? JSON.stringify(entry.sourceValue, null, 2)
-          : entry.sourceValue;
-        navigator.clipboard.writeText(textToCopy);
-        copiedKey = entry.key;
-        setTimeout(() => (copiedKey = null), 1500);
-        updateUI();
-      });
+      const code = document.createElement("code");
+      code.dir = "ltr";
+      code.className = "text-[11px] text-slate-500 font-mono flex-1 truncate text-left";
+      if (isPlural) {
+        const parts = entry.key.split("[");
+        const match = entry.key.match(/\[(.+?)\]/);
+        const span1 = document.createElement("span");
+        span1.className = "text-violet-600";
+        span1.textContent = escapeHtml(parts[0]);
+        const span2 = document.createElement("span");
+        span2.className = "text-slate-400";
+        span2.textContent = "[";
+        const span3 = document.createElement("span");
+        span3.className = "text-amber-600";
+        span3.textContent = escapeHtml(match ? match[1] : "");
+        const span4 = document.createElement("span");
+        span4.className = "text-slate-400";
+        span4.textContent = "]";
+        code.append(span1, span2, span3, span4);
+      } else {
+        code.textContent = safeKey;
+      }
+      header.appendChild(code);
 
-      const copyToTranslationBtn = div.querySelector(
-        ".copy-to-translation-btn",
-      );
-      if (copyToTranslationBtn) {
-        copyToTranslationBtn.addEventListener("click", () => {
-          if (Array.isArray(entry.sourceValue)) {
-            showToast(
-              "هشدار",
-              "آرایه‌ها را نمی‌توان مستقیماً به ترجمه کپی کرد. لطفاً از طریق فایل اصلی ویرایش کنید.",
-              "default",
-            );
-            return;
-          }
-          state.targetTranslations[entry.key] = entry.sourceValue;
-          copiedToTranslationKey = entry.key;
-          setTimeout(() => (copiedToTranslationKey = null), 1500);
-          updateUI();
-        });
+      if (Array.isArray(entry.sourceValue)) {
+        const arrayBadge = document.createElement("span");
+        arrayBadge.className = "text-[9px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium";
+        arrayBadge.textContent = "آرایه";
+        header.appendChild(arrayBadge);
       }
 
-      const textarea = div.querySelector(".translation-input");
-      textarea.addEventListener("input", (e) => {
-        state.targetTranslations[entry.key] = e.target.value;
-        saveToStorage();
-        updateProgressUI();
-      });
+      const btnGroup = document.createElement("div");
+      btnGroup.className = "flex items-center gap-1";
 
-      textarea.addEventListener("keydown", (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-          e.preventDefault();
-          const allFilteredEntries = getFilteredEntries();
-          const currentIndex = allFilteredEntries.findIndex(
-            (ent) => ent.key === entry.key,
-          );
-          const nextMissing = allFilteredEntries.find(
-            (ent, idx) => idx > currentIndex && !ent.isTranslated,
-          );
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "copy-source-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors";
+      copyBtn.title = "کپی متن مبدا";
+      copyBtn.innerHTML = copiedKey === entry.key
+        ? '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+        : '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+      btnGroup.appendChild(copyBtn);
 
-          if (nextMissing) {
-            const nextIndex = allFilteredEntries.indexOf(nextMissing);
-            const nextPage = Math.floor(nextIndex / state.pageSize) + 1;
-            state.currentPage = nextPage;
-            updateUI();
+      if (!Array.isArray(entry.sourceValue)) {
+        const copyToBtn = document.createElement("button");
+        copyToBtn.className = "copy-to-translation-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-emerald-600 transition-colors";
+        copyToBtn.title = "کپی متن مبدا به ترجمه";
+        copyToBtn.innerHTML = copiedToTranslationKey === entry.key
+          ? '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+          : '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
+        btnGroup.appendChild(copyToBtn);
+      }
 
-            requestAnimationFrame(() => {
-              const nextTextarea = document.querySelector(
-                `textarea[data-key="${CSS.escape(nextMissing.key)}"]`,
-              );
-              if (nextTextarea) {
-                nextTextarea.focus();
-                nextTextarea.scrollIntoView({
-                  behavior: "smooth",
-                  block: "center",
-                });
-              }
-            });
-          } else {
-            showToast(
-              "🎉 تمام رشته‌ها ترجمه شده‌اند!",
-              "هیچ رشته ترجمه نشده‌ای باقی نمانده است",
-            );
-          }
-        }
-      });
+      header.appendChild(btnGroup);
 
-      // پیدا کردن و فعال‌سازی دکمه‌های کاراکتر خاص
-      const specialCharButtons = div.querySelectorAll(".special-char-btn");
-      specialCharButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const char = btn.textContent;
-          const start = textarea.selectionStart;
-          const end = textarea.selectionEnd;
-          const currentValue = textarea.value;
-          const newValue =
-            currentValue.slice(0, start) + char + currentValue.slice(end);
+      const statusBadge = document.createElement("span");
+      statusBadge.className = `text-[9px] px-1.5 py-0.5 rounded-full font-medium ${entry.isTranslated ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`;
+      statusBadge.textContent = entry.isTranslated ? "ترجمه شده" : "ترجمه نشده";
+      header.appendChild(statusBadge);
 
-          state.targetTranslations[entry.key] = newValue;
-          textarea.value = newValue;
-          saveToStorage();
-          updateProgressUI();
+      div.appendChild(header);
 
-          requestAnimationFrame(() => {
-            textarea.selectionStart = textarea.selectionEnd =
-              start + char.length;
-            textarea.focus();
-          });
+      // === Body grid ===
+      const grid = document.createElement("div");
+      grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-0";
+
+      // Left column: source value
+      const leftCol = document.createElement("div");
+      leftCol.className = "px-3 py-2 border-b sm:border-b-0 sm:border-l border-slate-100";
+
+      const sourceBox = document.createElement("div");
+      sourceBox.dir = "ltr";
+      sourceBox.className = "bg-slate-50 border border-slate-150 rounded px-2.5 py-1.5 text-sm text-slate-700 min-h-[2rem] max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-left";
+
+      if (Array.isArray(entry.sourceValue)) {
+        entry.sourceValue.forEach((v, i) => {
+          const line = document.createElement("div");
+          line.className = "py-0.5 border-b border-slate-100 last:border-0";
+          const idxSpan = document.createElement("span");
+          idxSpan.textContent = "[" + String(i) + "]";
+          line.appendChild(idxSpan);
+          const valSpan = document.createElement("span");
+          valSpan.dir = "ltr";
+          valSpan.textContent = " " + v;
+          line.appendChild(valSpan);
+          sourceBox.appendChild(line);
         });
-      });
+      } else if (entry.sourceValue) {
+        sourceBox.textContent = entry.sourceValue;
+      } else {
+        const emptyHint = document.createElement("span");
+        emptyHint.className = "text-slate-400 italic";
+        emptyHint.textContent = "خالی";
+        sourceBox.appendChild(emptyHint);
+      }
+      leftCol.appendChild(sourceBox);
+
+      if (specialChars.length > 0) {
+        const charsWrap = document.createElement("div");
+        charsWrap.className = "flex flex-wrap gap-1 mt-1.5";
+        specialChars.forEach((char) => {
+          const charBtn = document.createElement("button");
+          charBtn.className = "special-char-btn dir-ltr inline-flex items-center px-1.5 py-0.5 text-[11px] font-mono bg-violet-50 text-violet-700 border border-violet-200 rounded hover:bg-violet-100 hover:border-violet-300 transition-colors cursor-pointer";
+          charBtn.title = "درج " + char + " در محل نشانگر";
+          charBtn.textContent = char;
+          charsWrap.appendChild(charBtn);
+        });
+        leftCol.appendChild(charsWrap);
+      }
+
+      grid.appendChild(leftCol);
+
+      // Right column: translation input
+      const rightCol = document.createElement("div");
+      rightCol.className = "px-3 py-2";
+
+      if (Array.isArray(entry.sourceValue)) {
+        const readOnlyMsg = document.createElement("div");
+        readOnlyMsg.className = "text-sm text-slate-500 italic bg-slate-50 border border-slate-200 rounded-lg px-3 py-2";
+        readOnlyMsg.textContent = "آرایه‌ها در این نسخه فقط خوانده‌شده‌اند. برای ویرایش، فایل XML را مستقیماً ویرایش کنید.";
+        rightCol.appendChild(readOnlyMsg);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.dataset.key = entry.key;
+        textarea.className = "translation-input w-full text-sm min-h-[2.5rem] resize-y leading-relaxed border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent";
+        textarea.placeholder = "ترجمه...";
+        textarea.dir = "auto";
+        textarea.value = entry.targetValue || "";
+        rightCol.appendChild(textarea);
+      }
+
+      grid.appendChild(rightCol);
+      div.appendChild(grid);
 
       return div;
     }
@@ -3185,21 +3351,14 @@
     }
 
     function clearWorkspace() {
-      state = {
-        sourceKeys: {},
-        targetTranslations: {},
-        sourceFileName: "",
-        targetFileName: "",
-        sourceFileType: "json",
-        targetFileType: "",
-        xmlMetadata: [],
-        filterMode: "all",
-        currentPage: 1,
-        pageSize: 25,
-        searchQuery: "",
-      };
+      state.reset();
+      TranslationService.config.googleApiKey = "";
+      TranslationService.config.deeplApiKey = "";
+      TranslationService.saveConfig();
+      localStorage.removeItem("translation-api-config");
+      localStorage.removeItem("translation-api-config-encrypted");
       saveToStorage();
-      showToast("فضای کار پاک شد", "تمام داده‌های ذخیره‌شده حذف شد");
+      showToast("فضای کار پاک شد", "تمام داده‌ها و کلیدهای API از حافظه مرورگر حذف شدند");
       updateUI();
     }
 
@@ -3429,7 +3588,7 @@
         return;
       }
 
-      container.innerHTML = "";
+      const versionFrag = document.createDocumentFragment();
       versions.forEach((ver) => {
         const date = new Date(ver.timestamp);
         const dateStr =
@@ -3442,19 +3601,47 @@
         const div = document.createElement("div");
         div.className =
           "flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 text-xs group";
-        div.innerHTML = `
-          <span class="h-1.5 w-1.5 rounded-full bg-violet-400 flex-shrink-0"></span>
-          <div class="flex-1 min-w-0">
-            <p class="text-slate-600 truncate">${escapeHtml(ver.label)}</p>
-            <p class="text-[10px] text-slate-400">${dateStr} | ${toPersianNumber(ver.translatedKeys)}/${toPersianNumber(ver.totalKeys)}</p>
-          </div>
-          <div class="hidden group-hover:flex gap-1">
-            <button class="restore-version-btn px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 text-[10px]" data-id="${ver.id}">بازیابی</button>
-            <button class="delete-version-btn px-1.5 py-0.5 rounded bg-red-100 text-red-600 text-[10px]" data-id="${ver.id}">✕</button>
-          </div>
-        `;
-        container.appendChild(div);
+
+        const dot = document.createElement("span");
+        dot.className = "h-1.5 w-1.5 rounded-full bg-violet-400 flex-shrink-0";
+        div.appendChild(dot);
+
+        const textWrap = document.createElement("div");
+        textWrap.className = "flex-1 min-w-0";
+
+        const labelP = document.createElement("p");
+        labelP.className = "text-slate-600 truncate";
+        labelP.textContent = ver.label;
+        textWrap.appendChild(labelP);
+
+        const metaP = document.createElement("p");
+        metaP.className = "text-[10px] text-slate-400";
+        metaP.textContent = `${dateStr} | ${toPersianNumber(ver.translatedKeys)}/${toPersianNumber(ver.totalKeys)}`;
+        textWrap.appendChild(metaP);
+
+        div.appendChild(textWrap);
+
+        const actions = document.createElement("div");
+        actions.className = "hidden group-hover:flex gap-1";
+
+        const restoreBtn = document.createElement("button");
+        restoreBtn.className = "restore-version-btn px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 text-[10px]";
+        restoreBtn.dataset.id = ver.id;
+        restoreBtn.textContent = "بازیابی";
+        actions.appendChild(restoreBtn);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-version-btn px-1.5 py-0.5 rounded bg-red-100 text-red-600 text-[10px]";
+        deleteBtn.dataset.id = ver.id;
+        deleteBtn.textContent = "✕";
+        actions.appendChild(deleteBtn);
+
+        div.appendChild(actions);
+        versionFrag.appendChild(div);
       });
+
+      container.innerHTML = "";
+      container.appendChild(versionFrag);
 
       // Restore handlers
       container.querySelectorAll(".restore-version-btn").forEach((btn) => {
@@ -3494,10 +3681,18 @@
           }`;
         tab.textContent = `${lang.flag || ""} ${lang.name || code}`;
         tab.addEventListener("click", () => {
+          if (!targetLanguages?.languages?.[code]) {
+            console.error("Reference to selected language is invalid.");
+            showToast("خطا", "زبان انتخاب شده نامعتبر است");
+            return;
+          }
           try {
             saveCurrentLanguageToState();
-            if (!switchTargetLanguage(code)) return;
-            renderLanguageTabs();
+            targetLanguages.languages[targetLanguages.current].translations = typeof structuredClone !== "undefined" ? structuredClone(state.targetTranslations) : JSON.parse(JSON.stringify(state.targetTranslations));
+            if (typeof switchTargetLanguage === "function") {
+              switchTargetLanguage(code);
+              renderLanguageTabs();
+            }
           } catch (e) {
             console.error("Failed to switch target language:", e);
             showToast("خطا در تغییر زبان", e.message);
@@ -3528,7 +3723,7 @@
             "غیرفعال‌سازی";
           const decrypted = await EncryptionModule.secureLoad();
           if (decrypted) {
-            state = WorkspaceStorage.normalizePayload(JSON.parse(decrypted));
+            state.restore(WorkspaceStorage.normalizePayload(JSON.parse(decrypted)));
           }
         } else {
           await loadFromStorage();
@@ -3686,6 +3881,14 @@
           document.getElementById("settings-modal").classList.add("hidden");
         });
 
+      // Toggle API key visibility
+      document
+        .getElementById("toggle-api-key-visibility")
+        .addEventListener("click", () => {
+          const input = document.getElementById("api-key-input");
+          input.type = input.type === "password" ? "text" : "password";
+        });
+
       // Close modals on outside click
       document.querySelectorAll(".fixed.inset-0").forEach((modal) => {
         modal.addEventListener("click", (e) => {
@@ -3836,8 +4039,7 @@
       document.getElementById("search-input").addEventListener(
         "input",
         debounce((e) => {
-          state.searchQuery = e.target.value;
-          state.currentPage = 1;
+          state.setSearch(e.target.value);
           document
             .getElementById("clear-search")
             .classList.toggle("hidden", !e.target.value);
@@ -3857,22 +4059,17 @@
 
       document.querySelectorAll(".filter-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
-          state.filterMode = btn.dataset.filter;
-          state.currentPage = 1;
-          updateUI();
+          state.setFilter(btn.dataset.filter);
         });
       });
 
       document.getElementById("page-size").addEventListener("change", (e) => {
-        state.pageSize = parseInt(e.target.value);
-        state.currentPage = 1;
-        updateUI();
+        state.setPageSize(parseInt(e.target.value));
       });
 
       document.getElementById("prev-page").addEventListener("click", () => {
         if (state.currentPage > 1) {
-          state.currentPage--;
-          updateUI();
+          state.goToPage(state.currentPage - 1);
         }
       });
 
@@ -3882,21 +4079,110 @@
           allFilteredEntries.length / state.pageSize,
         );
         if (state.currentPage < totalPages) {
-          state.currentPage++;
-          updateUI();
+          state.goToPage(state.currentPage + 1);
         }
       });
 
       document.getElementById("pagination").addEventListener("click", (e) => {
         if (e.target.classList.contains("page-btn")) {
-          state.currentPage = parseInt(e.target.dataset.page);
-          updateUI();
+          state.goToPage(parseInt(e.target.dataset.page));
         }
       });
 
       document
         .getElementById("clear-workspace")
         .addEventListener("click", clearWorkspace);
+
+      // Event delegation on translation rows for performance
+      document.getElementById("translation-rows").addEventListener("click", (e) => {
+        const row = e.target.closest('[class*="rounded-lg border"]');
+        if (!row) return;
+        const textarea = row.querySelector(".translation-input");
+        const key = textarea?.dataset.key || "";
+
+        // Copy source button
+        if (e.target.closest(".copy-source-btn")) {
+          const sourceValue = state.sourceKeys[key];
+          const textToCopy = typeof sourceValue === "object" && sourceValue !== null
+            ? JSON.stringify(sourceValue, null, 2)
+            : String(sourceValue ?? "");
+          navigator.clipboard.writeText(textToCopy);
+          copiedKey = key;
+          setTimeout(() => (copiedKey = null), 1500);
+          updateUI();
+          return;
+        }
+
+        // Copy source to translation button
+        if (e.target.closest(".copy-to-translation-btn")) {
+          const sourceValue = state.sourceKeys[key];
+          if (Array.isArray(sourceValue)) {
+            showToast("هشدار", "آرایه‌ها را نمی‌توان مستقیماً به ترجمه کپی کرد.", "default");
+            return;
+          }
+          state.targetTranslations[key] = typeof sourceValue === "object" && sourceValue !== null
+            ? JSON.stringify(sourceValue)
+            : String(sourceValue ?? "");
+          copiedToTranslationKey = key;
+          setTimeout(() => (copiedToTranslationKey = null), 1500);
+          updateUI();
+          return;
+        }
+
+        // Special character button
+        const charBtn = e.target.closest(".special-char-btn");
+        if (charBtn && textarea) {
+          const char = charBtn.textContent;
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const newValue = textarea.value.slice(0, start) + char + textarea.value.slice(end);
+          state.targetTranslations[key] = newValue;
+          textarea.value = newValue;
+          saveToStorage();
+          updateProgressUI();
+          requestAnimationFrame(() => {
+            textarea.selectionStart = textarea.selectionEnd = start + char.length;
+            textarea.focus();
+          });
+        }
+      });
+
+      // Delegated input on translation rows
+      document.getElementById("translation-rows").addEventListener("input", (e) => {
+        const textarea = e.target.closest(".translation-input");
+        if (!textarea) return;
+        state.targetTranslations[textarea.dataset.key] = textarea.value;
+        saveToStorage();
+        updateProgressUI();
+      });
+
+      // Delegated keydown on translation rows
+      document.getElementById("translation-rows").addEventListener("keydown", (e) => {
+        const textarea = e.target.closest(".translation-input");
+        if (!textarea) return;
+        if (!(e.ctrlKey || e.metaKey) || e.key !== "Enter") return;
+        e.preventDefault();
+
+        const key = textarea.dataset.key;
+        const allFilteredEntries = getFilteredEntries();
+        const currentIndex = allFilteredEntries.findIndex((ent) => ent.key === key);
+        const nextMissing = allFilteredEntries.find((ent, idx) => idx > currentIndex && !ent.isTranslated);
+
+        if (nextMissing) {
+          const nextIndex = allFilteredEntries.indexOf(nextMissing);
+          state.currentPage = Math.floor(nextIndex / state.pageSize) + 1;
+          updateUI();
+          requestAnimationFrame(() => {
+            const nextTextarea = document.querySelector(`textarea[data-key="${CSS.escape(nextMissing.key)}"]`);
+            if (nextTextarea) {
+              nextTextarea.focus();
+              nextTextarea.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          });
+        } else {
+          showToast("🎉 تمام رشته‌ها ترجمه شده‌اند!", "هیچ رشته ترجمه نشده‌ای باقی نمانده است");
+        }
+      });
 
       // Initial UI updates
       initializeLanguageDropdown();
