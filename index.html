@@ -41,7 +41,7 @@
           </div>
           <div>
             <h1 class="text-lg font-bold text-slate-900 leading-tight">ابزار ترجمه محلی</h1>
-            <p class="text-xs text-slate-500">ترجمه فایل‌های زبان پروژه‌های متن‌باز</p>
+            <p class="text-xs text-slate-500">ترجمه فایل‌های زبان پروژه‌های متن‌باز (JSON، XML، YAML)</p>
           </div>
         </div>
         
@@ -60,6 +60,12 @@
             </svg>
             <span>ذخیره خودکار</span>
           </div>
+          <button id="ai-translate-btn" class="hidden h-8 px-3 rounded-lg bg-violet-600 hover:bg-violet-700 text-xs text-white flex items-center gap-1.5" title="ترجمه خودکار با هوش مصنوعی">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+            </svg>
+            ترجمه هوشمند
+          </button>
           <button id="upload-target-btn" class="hidden h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
@@ -89,7 +95,7 @@
             </div>
             <h2 class="text-2xl font-bold text-slate-900">شروع ترجمه</h2>
             <p class="text-slate-500 text-sm max-w-md mx-auto">
-              فایل JSON یا XML (Android strings.xml) مبدا را بارگذاری کنید تا کلیدهای ترجمه استخراج شوند. سپس می‌توانید فایل ترجمه موجود را نیز اضافه کنید.
+              فایل JSON، XML (Android strings.xml)، YAML یا Properties مبدا را بارگذاری کنید تا کلیدهای ترجمه استخراج شوند. سپس می‌توانید فایل ترجمه موجود را نیز اضافه کنید.
             </p>
           </div>
 
@@ -99,9 +105,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
               </svg>
               <span class="text-base font-semibold text-emerald-700">بارگذاری فایل مبدا</span>
-              <span class="text-xs text-emerald-500 mt-1">فایل JSON یا XML (Android strings.xml) را انتخاب کنید</span>
+              <span class="text-xs text-emerald-500 mt-1">فایل JSON، XML (Android strings.xml)، YAML یا Properties را انتخاب کنید</span>
               <span class="text-xs text-slate-400 mt-2">الزامی</span>
-              <input type="file" id="source-file" accept=".json,.xml" class="hidden">
+              <input type="file" id="source-file" accept=".json,.xml,.yaml,.yml,.properties" class="hidden">
             </label>
 
             <label class="group relative flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50/50 hover:bg-slate-50 hover:border-slate-400 cursor-pointer transition-all duration-200">
@@ -109,8 +115,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
               </svg>
               <span class="text-sm font-medium text-slate-600">بارگذاری فایل مقصد - اختیاری</span>
-              <span class="text-xs text-slate-400 mt-1">فایل ترجمه موجود (JSON یا XML) را برای ادامه کار بارگذاری کنید</span>
-              <input type="file" id="target-file" accept=".json,.xml" class="hidden">
+              <span class="text-xs text-slate-400 mt-1">فایل ترجمه موجود (JSON، XML، YAML یا Properties) را برای ادامه کار بارگذاری کنید</span>
+              <input type="file" id="target-file" accept=".json,.xml,.yaml,.yml,.properties" class="hidden">
             </label>
           </div>
 
@@ -126,6 +132,18 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
               </svg>
               <span>Android XML</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <span>YAML</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <span>Properties</span>
             </div>
             <div class="flex items-center gap-1.5">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,7 +328,7 @@
     <!-- Footer -->
     <footer class="border-t border-slate-200 bg-white py-3 px-4 mt-auto">
       <div class="max-w-screen-2xl mx-auto flex items-center justify-between text-xs text-slate-400">
-        <span>ابزار ترجمه محلی — پشتیبانی از JSON و XML (Android strings.xml)</span>
+        <span>ابزار ترجمه محلی — پشتیبانی از JSON، XML (Android strings.xml)، YAML و Properties</span>
         <span>ساخت شده با ❤️ برای جامعه فارسی‌زبان</span>
       </div>
     </footer>
@@ -363,12 +381,72 @@
 
     // Detect file type
     function detectFileType(filename) {
-      return filename.toLowerCase().endsWith('.xml') ? 'xml' : 'json';
+      const ext = filename.toLowerCase();
+      if (ext.endsWith('.xml')) return 'xml';
+      if (ext.endsWith('.yaml') || ext.endsWith('.yml')) return 'yaml';
+      if (ext.endsWith('.properties')) return 'properties';
+      return 'json';
     }
 
     // Check if content is XML
     function isXMLContent(content) {
       return content.trim().startsWith('<?xml') || content.trim().startsWith('<resources');
+    }
+
+    // Parse YAML content (simple parser for key-value pairs)
+    function parseYAML(content) {
+      const flat = {};
+      const lines = content.split('\n');
+      let currentKey = '';
+      let indentLevel = 0;
+      const stack = [{ keys: [], indent: -1 }];
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.trim() || line.trim().startsWith('#') || line.trim().startsWith('---')) continue;
+        
+        const match = line.match(/^(\s*)([^:#]+):\s*(.*)$/);
+        if (match) {
+          const indent = match[1].length;
+          const key = match[2].trim();
+          const value = match[3].trim();
+          
+          // Pop stack until we find the right parent
+          while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+            stack.pop();
+          }
+          
+          const parentKeys = stack[stack.length - 1].keys;
+          const fullKey = [...parentKeys, key].join('.');
+          
+          if (value === '' || value === '|' || value === '> ') {
+            // This is a nested object or array
+            stack.push({ keys: [...parentKeys, key], indent: indent });
+          } else {
+            // Remove quotes if present
+            let cleanValue = value;
+            if ((value.startsWith('"') && value.endsWith('"')) || 
+                (value.startsWith("'") && value.endsWith("'"))) {
+              cleanValue = value.slice(1, -1);
+            }
+            flat[fullKey] = cleanValue;
+          }
+        } else if (line.trim().startsWith('- ')) {
+          // Array item
+          const arrayValue = line.trim().substring(2).trim();
+          // Try to find the parent key
+          if (stack.length > 1) {
+            const parentKeys = stack[stack.length - 1].keys;
+            const parentKey = parentKeys.join('.');
+            if (!flat[parentKey]) {
+              flat[parentKey] = [];
+            }
+            flat[parentKey].push(arrayValue);
+          }
+        }
+      }
+      
+      return { flat, metadata: [] };
     }
 
     // Parse Android strings.xml
@@ -428,6 +506,31 @@
       return { flat, metadata };
     }
 
+    // Parse YAML file content
+    function parseYAMLFile(content) {
+      return parseYAML(content);
+    }
+
+    // Parse Properties file content
+    function parseProperties(content) {
+      const flat = {};
+      const lines = content.split('\n');
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('!')) continue;
+        
+        const equalIndex = trimmed.indexOf('=');
+        if (equalIndex > 0) {
+          const key = trimmed.substring(0, equalIndex).trim();
+          const value = trimmed.substring(equalIndex + 1).trim();
+          flat[key] = value;
+        }
+      }
+      
+      return { flat, metadata: [] };
+    }
+
     // Serialize to Android strings.xml format
     function serializeXML(translations, metadata) {
       let xml = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n';
@@ -463,6 +566,61 @@
       
       xml += '</resources>';
       return xml;
+    }
+
+    // Serialize to YAML format
+    function serializeYAML(translations) {
+      let yaml = '';
+      const lines = [];
+      
+      for (const key in translations) {
+        const value = translations[key];
+        const indent = key.split('.').length - 1;
+        const indentStr = '  '.repeat(indent);
+        
+        if (Array.isArray(value)) {
+          lines.push(`${indentStr}${key}:`);
+          value.forEach(item => {
+            lines.push(`${indentStr}  - ${escapeYAMLValue(item)}`);
+          });
+        } else if (typeof value === 'object') {
+          lines.push(`${indentStr}${key}:`);
+          const nested = Object.entries(value).map(([k, v]) => 
+            `${indentStr}  ${k}: ${escapeYAMLValue(v)}`
+          ).join('\n');
+          lines.push(nested);
+        } else {
+          lines.push(`${indentStr}${key}: ${escapeYAMLValue(value)}`);
+        }
+      }
+      
+      return lines.join('\n');
+    }
+
+    function escapeYAMLValue(value) {
+      if (value === undefined || value === null) return 'null';
+      if (typeof value !== 'string') return String(value);
+      
+      // Check if value needs quoting
+      if (value.includes(':') || value.includes('#') || value.includes('\n') || 
+          value.startsWith(' ') || value.endsWith(' ') || 
+          value.startsWith('[') || value.startsWith('{') ||
+          value === 'true' || value === 'false' || value === 'null') {
+        return `"${value.replace(/"/g, '\\"')}"`;
+      }
+      return value;
+    }
+
+    // Serialize to Properties format
+    function serializeProperties(translations) {
+      let properties = '';
+      for (const key in translations) {
+        const value = translations[key];
+        if (value !== undefined && value !== null) {
+          properties += `${key}=${value}\n`;
+        }
+      }
+      return properties;
     }
 
     function escapeXML(str) {
@@ -676,6 +834,10 @@
       if (state.sourceFileName) {
         const icon = state.sourceFileType === 'xml' 
           ? '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>'
+          : state.sourceFileType === 'yaml'
+          ? '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>'
+          : state.sourceFileType === 'properties'
+          ? '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>'
           : '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
         
         fileInfo.innerHTML += `
@@ -979,11 +1141,22 @@
         let flat, fileType, metadata = [];
         try {
           const content = event.target.result;
+          const detectedType = detectFileType(file.name);
           
-          if (detectFileType(file.name) === 'xml' || isXMLContent(content)) {
+          if (detectedType === 'xml' || isXMLContent(content)) {
             const result = parseXML(content);
             flat = result.flat;
             fileType = 'xml';
+            metadata = result.metadata;
+          } else if (detectedType === 'yaml') {
+            const result = parseYAMLFile(content);
+            flat = result.flat;
+            fileType = 'yaml';
+            metadata = result.metadata;
+          } else if (detectedType === 'properties') {
+            const result = parseProperties(content);
+            flat = result.flat;
+            fileType = 'properties';
             metadata = result.metadata;
           } else {
             const json = JSON.parse(content);
@@ -997,10 +1170,13 @@
           state.xmlMetadata = metadata;
           state.currentPage = 1;
           
-          showToast('فایل مبدا بارگذاری شد', `${toPersianNumber(Object.keys(flat).length)} کلید یافت شد${fileType === 'xml' ? ' (فایل XML)' : ''}`);
+          const typeLabel = fileType === 'xml' ? ' (فایل XML)' : 
+                           fileType === 'yaml' ? ' (فایل YAML)' : 
+                           fileType === 'properties' ? ' (فایل Properties)' : ' (فایل JSON)';
+          showToast('فایل مبدا بارگذاری شد', `${toPersianNumber(Object.keys(flat).length)} کلید یافت شد${typeLabel}`);
         } catch (err) {
           console.error(err);
-          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON یا XML (Android strings.xml) بارگذاری کنید', 'destructive');
+          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON، XML (Android strings.xml)، YAML یا Properties بارگذاری کنید', 'destructive');
           return;
         }
         
@@ -1023,11 +1199,16 @@
         try {
           const content = event.target.result;
           let flat;
-          
-          // Check if target file type matches source file type
           const targetFileType = detectFileType(file.name);
+          
           if (targetFileType === 'xml' || isXMLContent(content)) {
             const result = parseXML(content);
+            flat = result.flat;
+          } else if (targetFileType === 'yaml') {
+            const result = parseYAMLFile(content);
+            flat = result.flat;
+          } else if (targetFileType === 'properties') {
+            const result = parseProperties(content);
             flat = result.flat;
           } else {
             const json = JSON.parse(content);
@@ -1036,7 +1217,13 @@
           
           // Check if file types match for better UX
           if (state.sourceFileType && targetFileType !== state.sourceFileType) {
-            showToast('هشدار نوع فایل', `فایل مبدا ${state.sourceFileType === 'xml' ? 'XML' : 'JSON'} است اما فایل مقصد ${targetFileType === 'xml' ? 'XML' : 'JSON'} است. ممکن است برخی کلیدها مطابقت نداشته باشند.`, 'default');
+            const sourceType = state.sourceFileType === 'xml' ? 'XML' : 
+                              state.sourceFileType === 'yaml' ? 'YAML' : 
+                              state.sourceFileType === 'properties' ? 'Properties' : 'JSON';
+            const targetType = targetFileType === 'xml' ? 'XML' : 
+                              targetFileType === 'yaml' ? 'YAML' : 
+                              targetFileType === 'properties' ? 'Properties' : 'JSON';
+            showToast('هشدار نوع فایل', `فایل مبدا ${sourceType} است اما فایل مقصد ${targetType} است. ممکن است برخی کلیدها مطابقت نداشته باشند.`, 'default');
           }
           
           state.targetTranslations = { ...state.targetTranslations, ...flat };
@@ -1046,7 +1233,7 @@
           showToast('فایل مقصد بارگذاری شد', `${toPersianNumber(matched)} کلید مطابقت داشت از ${toPersianNumber(Object.keys(flat).length)} کلید`);
           updateUI();
         } catch (err) {
-          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON یا XML (Android strings.xml) بارگذاری کنید', 'destructive');
+          showToast('خطا در بارگذاری', 'فایل معتبر نیست. لطفاً فایل JSON، XML (Android strings.xml)، YAML یا Properties بارگذاری کنید', 'destructive');
         }
       };
       reader.readAsText(file);
@@ -1071,6 +1258,26 @@
         content = serializeXML(finalTranslations, state.xmlMetadata);
         mimeType = 'application/xml';
         defaultFileName = state.targetFileName || 'fa.xml';
+      } else if (state.sourceFileType === 'yaml') {
+        const finalTranslations = {};
+        for (const key in state.sourceKeys) {
+          if (state.targetTranslations[key] && state.targetTranslations[key].trim() !== '') {
+            finalTranslations[key] = state.targetTranslations[key];
+          }
+        }
+        content = serializeYAML(finalTranslations);
+        mimeType = 'text/yaml';
+        defaultFileName = state.targetFileName || 'fa.yaml';
+      } else if (state.sourceFileType === 'properties') {
+        const finalTranslations = {};
+        for (const key in state.sourceKeys) {
+          if (state.targetTranslations[key] && state.targetTranslations[key].trim() !== '') {
+            finalTranslations[key] = state.targetTranslations[key];
+          }
+        }
+        content = serializeProperties(finalTranslations);
+        mimeType = 'text/plain';
+        defaultFileName = state.targetFileName || 'fa.properties';
       } else {
         // برای فایل‌های JSON
         const finalJsonTranslations = {};

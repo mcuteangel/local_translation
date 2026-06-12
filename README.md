@@ -2,9 +2,9 @@
 
 🌍 [English Version](README_EN.md)
 
-یک ابزار کلاینت‌ساید (Client-side)، سریع و بدون وابستگی (Zero-Dependency) برای بومی‌سازی و ترجمه رشته‌به‌رشته فایل‌های پروژه شامل فرمت‌های **Android XML** و **JSON**. این برنامه به مترجمان اجازه می‌دهد تا فایل‌های زبان برنامه‌ها را بدون به‌هم‌ریختن ساختار، به‌صورت محلی ترجمه و مدیریت کنند.
+یک ابزار کلاینت‌ساید (Client-side)، سریع و بدون وابستگی (Zero-Dependency) برای بومی‌سازی و ترجمه رشته‌به‌رشته فایل‌های پروژه شامل فرمت‌های **Android XML**، **JSON**، **YAML** و **Properties**. این برنامه به مترجمان اجازه می‌دهد تا فایل‌های زبان برنامه‌ها را بدون به‌هم‌ریختن ساختار، به‌صورت محلی ترجمه و مدیریت کنند.
 
-A lightweight, zero-dependency, client-side tool designed for string-by-string localization of **Android XML** and **JSON** files. It enables translators to easily manage project language assets locally without breaking nested or strict file structures.
+A lightweight, zero-dependency, client-side tool designed for string-by-string localization of **Android XML**, **JSON**, **YAML** and **Properties** files. It enables translators to easily manage project language assets locally without breaking nested or strict file structures.
 
 🔗 **نسخه آنلاین:** [https://mcuteangel.github.io/local_translation/](https://mcuteangel.github.io/local_translation/)
 
@@ -14,7 +14,7 @@ A lightweight, zero-dependency, client-side tool designed for string-by-string l
 
 ## ✨ ویژگی‌های کلیدی | Key Features
 
-* **🗂️ پشتیبانی از فرمت‌های استاندارد:** پارس و سه‌رشته‌سازی هوشمند فایل‌های `strings.xml` اندروید و فایل‌های تو در توی `JSON`.
+* **🗂️ پشتیبانی از فرمت‌های استاندارد:** پارس و سه‌رشته‌سازی هوشمند فایل‌های `strings.xml` اندروید، فایل‌های تو در توی `JSON`، فایل‌های `YAML` و فایل‌های `Properties`.
 * **🔒 حریم خصوصی کامل (Local-First):** بدون نیاز به سرور یا پایگاه داده؛ تمام پردازش‌ها در مرورگر شما انجام شده و داده‌ها در `LocalStorage` ذخیره می‌شوند.
 * **🛡️ خروجی هوشمند و Fallback استاندارد:**
   * کلیدهای ترجمه‌نشده در زمان خروجی حذف می‌شوند تا در اندروید یا وب، به‌طور خودکار مکانیزم Fallback (سوئیچ روی زبان اصلی) فعال بماند.
@@ -38,10 +38,10 @@ A lightweight, zero-dependency, client-side tool designed for string-by-string l
 ## 🚀 نحوه استفاده | How to Use
 
 ### ۱. بارگذاری فایل مبدا (Source)
-فایل زبان اصلی پروژه خود را (مثلاً فایل انگلیسی `strings.xml` یا `en.json`) وارد کنید. برنامه کلیدها را استخراج کرده و ساختار درختی را به فرمت فلت تبدیل می‌کند.
+فایل زبان اصلی پروژه خود را (مثلاً فایل انگلیسی `strings.xml`، `en.json`، `en.yaml` یا `en.properties`) وارد کنید. برنامه کلیدها را استخراج کرده و ساختار درختی را به فرمت فلت تبدیل می‌کند.
 
 ### ۲. بارگذاری فایل مقصد (Target - اختیاری)
-اگر قبلاً بخشی از فایل را ترجمه کرده‌اید، می‌توانید فایل نیمه‌کاره مقصد را (مثلاً `fa.xml` یا `fa.json`) بارگذاری کنید تا ترجمه‌های قبلی شما در فیلدها جایگذاری شوند.
+اگر قبلاً بخشی از فایل را ترجمه کرده‌اید، می‌توانید فایل نیمه‌کاره مقصد را (مثلاً `fa.xml`، `fa.json`، `fa.yaml` یا `fa.properties`) بارگذاری کنید تا ترجمه‌های قبلی شما در فیلدها جایگذاری شوند.
 
 ### ۳. ترجمه و ناوبری سریع
 شروع به ترجمه رشته‌ها کنید. پس از اتمام هر رشته، فشردن کلید **`Ctrl + Enter`** به طور خودکار موقعیت شما را به رشتهٔ ترجمه‌نشده بعدی منتقل می‌کند.

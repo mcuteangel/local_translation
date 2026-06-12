@@ -2,7 +2,7 @@
 
 🌍 [Persian Version](README.md)
 
-A lightweight, zero-dependency, client-side tool designed for string-by-string localization of **Android XML** and **JSON** files. It enables translators to easily manage project language assets locally without breaking nested or strict file structures.
+A lightweight, zero-dependency, client-side tool designed for string-by-string localization of **Android XML**, **JSON**, **YAML** and **Properties** files. It enables translators to easily manage project language assets locally without breaking nested or strict file structures.
 
 🔗 **Live Version:** [https://mcuteangel.github.io/local_translation/](https://mcuteangel.github.io/local_translation/)
 
@@ -12,7 +12,7 @@ A lightweight, zero-dependency, client-side tool designed for string-by-string l
 
 ## ✨ Key Features
 
-* **🗂️ Standard Format Support:** Intelligent parsing and serialization of Android `strings.xml` files and nested `JSON` files.
+* **🗂️ Standard Format Support:** Intelligent parsing and serialization of Android `strings.xml` files, nested `JSON` files, `YAML` files, and `Properties` files.
 * **🔒 Complete Privacy (Local-First):** No server or database required; all processing happens in your browser and data is stored in `LocalStorage`.
 * **🛡️ Smart Output & Standard Fallback:**
   * Untranslated keys are removed during export to maintain automatic Fallback mechanism (switching to primary language) in Android or web apps.
@@ -36,10 +36,10 @@ A lightweight, zero-dependency, client-side tool designed for string-by-string l
 ## 🚀 How to Use
 
 ### 1. Load Source File
-Upload your project's primary language file (e.g., English `strings.xml` or `en.json`). The tool extracts keys and converts the tree structure to a flat format.
+Upload your project's primary language file (e.g., English `strings.xml`, `en.json`, `en.yaml` or `en.properties`). The tool extracts keys and converts the tree structure to a flat format.
 
 ### 2. Load Target File (Optional)
-If you have previously translated part of the file, you can upload the incomplete target file (e.g., `fa.xml` or `fa.json`) to populate your previous translations in the fields.
+If you have previously translated part of the file, you can upload the incomplete target file (e.g., `fa.xml`, `fa.json`, `fa.yaml` or `fa.properties`) to populate your previous translations in the fields.
 
 ### 3. Translate & Navigate
 Start translating strings. After completing each string, pressing **`Ctrl + Enter`** automatically moves your position to the next untranslated string.
