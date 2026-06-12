@@ -17,9 +17,12 @@
   </style>
 </head>
 <body class="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-slate-100/50">
+  <!-- Skip link for keyboard users -->
+  <a href="#app" class="sr-only focus:not-sr-only">پرش به محتوای اصلی</a>
   
   <!-- Loading State -->
-  <div id="loading-state" aria-live="polite" class="min-h-screen flex flex-col items-center justify-center">
+  <!-- ARIA live region for loading spinner – informs screen readers that content is loading -->
+<div id="loading-state" aria-live="polite" class="min-h-screen flex flex-col items-center justify-center">
     <div class="flex flex-col items-center gap-3">
       <div class="h-10 w-10 rounded-xl bg-emerald-600 flex items-center justify-center animate-pulse">
         <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +36,8 @@
   <!-- Main App -->
   <div id="app" class="hidden min-h-screen flex flex-col">
     <!-- Header -->
-    <header role="banner" class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm">
+    <!-- Header (banner) – contains navigation and action buttons -->
+<header role="banner" class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm">
       <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="h-10 w-10 rounded-xl bg-emerald-600 flex items-center justify-center shadow-md">
@@ -62,31 +66,36 @@
             </svg>
             <span>ذخیره خودکار</span>
           </div>
-          <button id="ai-translate-btn" aria-label="ترجمه هوشمند با هوش مصنوعی" class="hidden h-8 px-3 rounded-lg bg-violet-600 hover:bg-violet-700 text-xs text-white flex items-center gap-1.5" title="ترجمه خودکار با هوش مصنوعی">
+          <!-- ARIA label explains purpose of AI translate button -->
+<button id="ai-translate-btn" aria-label="ترجمه هوشمند با هوش مصنوعی" class="hidden h-8 px-3 rounded-lg bg-violet-600 hover:bg-violet-700 text-xs text-white flex items-center gap-1.5" title="ترجمه خودکار با هوش مصنوعی">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
             </svg>
             ترجمه هوشمند
           </button>
-          <button id="batch-edit-btn" aria-label="ویرایش گروهی" class="hidden h-8 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-xs text-white flex items-center gap-1.5" title="ویرایش گروهی">
+          <!-- ARIA label for batch edit button -->
+<button id="batch-edit-btn" aria-label="ویرایش گروهی" class="hidden h-8 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-xs text-white flex items-center gap-1.5" title="ویرایش گروهی">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
             </svg>
             ویرایش گروهی
           </button>
-          <button id="diff-view-btn" aria-label="مقایسه تغییرات" class="hidden h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs text-white flex items-center gap-1.5" title="مقایسه تغییرات">
+          <!-- ARIA label for diff view button -->
+<button id="diff-view-btn" aria-label="مقایسه تغییرات" class="hidden h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs text-white flex items-center gap-1.5" title="مقایسه تغییرات">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"></path>
             </svg>
             مقایسه
           </button>
-          <button id="upload-target-btn" aria-label="بارگذاری فایل مقصد" class="hidden h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
+          <!-- ARIA label for upload target button -->
+<button id="upload-target-btn" aria-label="بارگذاری فایل مقصد" class="hidden h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
             </svg>
             بارگذاری مقصد
           </button>
-          <button id="settings-btn" aria-label="تنظیمات" class="hidden h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 flex items-center gap-1.5" title="تنظیمات">
+          <!-- ARIA label for settings button -->
+<button id="settings-btn" aria-label="تنظیمات" class="hidden h-8 px-3 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 flex items-center gap-1.5" title="تنظیمات">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -94,7 +103,8 @@
             تنظیمات
           </button>
           <div class="hidden h-8 relative" id="export-dropdown-wrapper">
-            <button id="export-btn" aria-label="خروجی گرفتن" class="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs text-white flex items-center gap-1.5">
+            <!-- ARIA label for export button -->
+<button id="export-btn" aria-label="خروجی گرفتن" class="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs text-white flex items-center gap-1.5">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
               </svg>
@@ -113,6 +123,7 @@
         </div>
       </div>
     </header>
+<!-- /Header -->
 
     <!-- Main Content -->
     <main role="main" class="flex-1 flex flex-col lg:flex-row max-w-screen-2xl mx-auto w-full">

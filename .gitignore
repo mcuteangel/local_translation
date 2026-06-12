@@ -48,6 +48,10 @@ logs/
 .DS_Store
 .DS_Store?
 ._*
+
+# === Local test/debug files ===
+test_write.txt
+agent-output/
 .Spotlight-V100
 .Trashes
 ehthumbs.db
