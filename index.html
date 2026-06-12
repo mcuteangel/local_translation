@@ -1239,37 +1239,27 @@
         return { key, val };
       };
 
-      if (!isHeaderRow) {
-        // Process first line already read
-        const firstRow = extractRow(firstLine);
-        if (firstRow) setSafeFlatValue(flat, firstRow.key, firstRow.val);
+      const keyCol = isHeaderRow ? headers.findIndex((h) =>
+        /^(key|id|name|کلید)$/i.test(h.trim()),
+      ) : -1;
+      const valueCol = isHeaderRow ? headers.findIndex((h) =>
+        /^(value|text|translation|مقدار|ترجمه)$/i.test(h.trim()),
+      ) : -1;
 
-        for (const line of lines) {
-          const row = extractRow(line);
-          if (row) setSafeFlatValue(flat, row.key, row.val);
-        }
-      } else {
-        const keyCol = headers.findIndex((h) =>
-          /^(key|id|name|کلید)$/i.test(h.trim()),
-        );
-        const valueCol = headers.findIndex((h) =>
-          /^(value|text|translation|مقدار|ترجمه)$/i.test(h.trim()),
-        );
+      const allLines = isHeaderRow ? [...lines] : [firstLine, ...lines];
 
-        for (const line of lines) {
-          const row = extractRow(line);
-          if (!row) continue;
+      for (const line of allLines) {
+        const row = extractRow(line);
+        if (!row) continue;
+
+        if (isHeaderRow) {
           const parts = parseCSVLine(line, sep);
-
-          const getValue = (columnIndex) => {
-            if (columnIndex < 0 || columnIndex >= parts.length) return "";
-            return parts[columnIndex];
-          };
-
-          const key = keyCol >= 0 ? getValue(keyCol) : row.key;
+          const key = keyCol >= 0 ? (keyCol < parts.length ? parts[keyCol] : "") : row.key;
           if (!key) continue;
-          const val = valueCol >= 0 ? getValue(valueCol) : row.val;
+          const val = valueCol >= 0 ? (valueCol < parts.length ? parts[valueCol] : "") : row.val;
           setSafeFlatValue(flat, key, val);
+        } else {
+          setSafeFlatValue(flat, row.key, row.val);
         }
       }
 
@@ -1858,7 +1848,7 @@
           id: Date.now(),
           timestamp: new Date().toISOString(),
           label: label || `نسخه ${this.versions.length + 1}`,
-          data: typeof structuredClone !== "undefined" ? structuredClone(translations) : JSON.parse(JSON.stringify(translations)),
+          data: deepClone(translations),
           totalKeys: Object.keys(translations).length,
           translatedKeys: Object.keys(translations).filter((k) => {
             const v = translations[k];
@@ -1874,7 +1864,7 @@
       restore(versionId) {
         this.load();
         const version = this.versions.find((v) => v.id === versionId);
-        return version ? (typeof structuredClone !== "undefined" ? structuredClone(version.data) : JSON.parse(JSON.stringify(version.data))) : null;
+        return version ? deepClone(version.data) : null;
       },
 
       getVersions() {
@@ -2065,7 +2055,7 @@
       }
     }
 
-    function clonePlainObject(value) {
+    function deepClone(value) {
       if (value === null || value === undefined) return {};
       if (Array.isArray(value)) return [];
       if (typeof value !== "object") return value;
@@ -2130,7 +2120,7 @@
           flag: typeof lang.flag === "string" ? lang.flag : "",
           translations:
             lang.translations && typeof lang.translations === "object"
-              ? clonePlainObject(lang.translations)
+              ? deepClone(lang.translations)
               : {},
         };
       }
@@ -2161,7 +2151,7 @@
       }
 
       targetLanguages.languages[targetLanguages.current].translations =
-        clonePlainObject(state.targetTranslations);
+        deepClone(state.targetTranslations);
     }
 
     function createDiffEntryNode(key, value, side) {
@@ -2245,7 +2235,7 @@
       saveCurrentLanguageToState();
 
       targetLanguages.current = code;
-      state.targetTranslations = clonePlainObject(
+      state.targetTranslations = deepClone(
         targetLanguages.languages[code].translations || {},
       );
       saveTargetLanguages();
@@ -2270,7 +2260,7 @@
         const saved = localStorage.getItem("target-languages");
         if (saved) {
           targetLanguages = normalizeLanguageState(JSON.parse(saved));
-          state.targetTranslations = clonePlainObject(
+          state.targetTranslations = deepClone(
             targetLanguages.languages[targetLanguages.current].translations,
           );
         }
@@ -2584,9 +2574,7 @@
       }
 
       clone() {
-        return typeof structuredClone !== "undefined"
-          ? structuredClone(this)
-          : JSON.parse(JSON.stringify(this));
+        return deepClone(this);
       }
 
       restore(payload) {
@@ -2626,13 +2614,13 @@
     const WorkspaceStorage = {
       buildPayload() {
         return {
-          sourceKeys: clonePlainObject(state.sourceKeys || {}),
-          targetTranslations: clonePlainObject(state.targetTranslations || {}),
+          sourceKeys: deepClone(state.sourceKeys || {}),
+          targetTranslations: deepClone(state.targetTranslations || {}),
           sourceFileName: String(state.sourceFileName || ""),
           targetFileName: String(state.targetFileName || ""),
           sourceFileType: String(state.sourceFileType || "json"),
           targetFileType: String(state.targetFileType || ""),
-          xmlMetadata: clonePlainObject(state.xmlMetadata || []),
+          xmlMetadata: deepClone(state.xmlMetadata || []),
           filterMode: String(state.filterMode || "all"),
           currentPage: Number.isFinite(state.currentPage)
             ? state.currentPage
@@ -2869,25 +2857,8 @@
       const settingsBtn = document.getElementById("settings-btn");
       const aiTranslateBtn = document.getElementById("ai-translate-btn");
 
-      if (hasSourceFile) {
-        autoSaveBadge?.classList.remove("hidden");
-        uploadTargetBtn?.classList.remove("hidden");
-        exportBtn?.classList.remove("hidden");
-        exportDropdownWrapper?.classList.remove("hidden");
-        batchEditBtn?.classList.remove("hidden");
-        diffViewBtn?.classList.remove("hidden");
-        settingsBtn?.classList.remove("hidden");
-        aiTranslateBtn?.classList.remove("hidden");
-      } else {
-        autoSaveBadge?.classList.add("hidden");
-        uploadTargetBtn?.classList.add("hidden");
-        exportBtn?.classList.add("hidden");
-        exportDropdownWrapper?.classList.add("hidden");
-        batchEditBtn?.classList.add("hidden");
-        diffViewBtn?.classList.add("hidden");
-        settingsBtn?.classList.add("hidden");
-        aiTranslateBtn?.classList.add("hidden");
-      }
+      [autoSaveBadge, uploadTargetBtn, exportBtn, exportDropdownWrapper, batchEditBtn, diffViewBtn, settingsBtn, aiTranslateBtn]
+        .forEach((el) => el?.classList.toggle("hidden", !hasSourceFile));
 
       if (!hasSourceFile) return;
 
@@ -3808,7 +3779,7 @@
           }
           try {
             saveCurrentLanguageToState();
-            targetLanguages.languages[targetLanguages.current].translations = typeof structuredClone !== "undefined" ? structuredClone(state.targetTranslations) : JSON.parse(JSON.stringify(state.targetTranslations));
+            targetLanguages.languages[targetLanguages.current].translations = deepClone(state.targetTranslations);
             if (typeof switchTargetLanguage === "function") {
               switchTargetLanguage(code);
               renderLanguageTabs();
@@ -3930,20 +3901,20 @@
       document
         .getElementById("batch-clear-all-btn")
         .addEventListener("click", batchClearAll);
-      document
-        .getElementById("select-all-btn")
-        .addEventListener("click", () => {
-          document.getElementById("batch-find").value = "";
-          document.getElementById("batch-replace").value = "";
-        });
-      document
-        .getElementById("deselect-all-btn")
-        .addEventListener("click", () => {
-          document.getElementById("batch-find").value = "";
-          document.getElementById("batch-replace").value = "";
+      function resetBatchFields(clearPrefixSuffix = false) {
+        document.getElementById("batch-find").value = "";
+        document.getElementById("batch-replace").value = "";
+        if (clearPrefixSuffix) {
           document.getElementById("batch-prefix").value = "";
           document.getElementById("batch-suffix").value = "";
-        });
+        }
+      }
+      document
+        .getElementById("select-all-btn")
+        .addEventListener("click", () => resetBatchFields());
+      document
+        .getElementById("deselect-all-btn")
+        .addEventListener("click", () => resetBatchFields(true));
 
       // Diff View
       document
