@@ -50,14 +50,6 @@
             <p class="text-xs text-slate-500">ترجمه فایل‌های زبان پروژه‌های متن‌باز (JSON، XML، YAML، Properties، CSV، INI، PO)</p>
           </div>
         </div>
-        
-        <div class="hidden md:flex items-center gap-2 bg-gradient-to-l from-violet-50 to-purple-50 border border-violet-200 rounded-xl px-4 py-2">
-          <svg class="h-4 w-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
-          </svg>
-          <span class="text-sm text-violet-700 font-medium">ترجمه هوشمند هوش مصنوعی</span>
-          <span class="text-xs text-emerald-500">(فعال)</span>
-        </div>
 
         <div class="flex items-center gap-2" id="header-actions">
           <div id="auto-save-badge" class="hidden sm:flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
@@ -67,21 +59,21 @@
             <span>ذخیره خودکار</span>
           </div>
           <!-- ARIA label explains purpose of AI translate button -->
-<button id="ai-translate-btn" aria-label="ترجمه هوشمند با هوش مصنوعی" class="hidden h-8 px-3 rounded-lg bg-violet-600 hover:bg-violet-700 text-xs text-white flex items-center gap-1.5" title="ترجمه خودکار با هوش مصنوعی">
+<button id="ai-translate-btn" aria-label="ترجمه هوشمند با هوش مصنوعی" class="header-btn h-8 px-3 rounded-lg text-xs text-white flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700" title="ترجمه خودکار با هوش مصنوعی">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
             </svg>
             ترجمه هوشمند
           </button>
           <!-- ARIA label for batch edit button -->
-<button id="batch-edit-btn" aria-label="ویرایش گروهی" class="hidden h-8 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-xs text-white flex items-center gap-1.5" title="ویرایش گروهی">
+<button id="batch-edit-btn" aria-label="ویرایش گروهی" class="header-btn h-8 px-3 rounded-lg text-xs text-white flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700" title="ویرایش گروهی">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
             </svg>
             ویرایش گروهی
           </button>
           <!-- ARIA label for diff view button -->
-<button id="diff-view-btn" aria-label="مقایسه تغییرات" class="hidden h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs text-white flex items-center gap-1.5" title="مقایسه تغییرات">
+<button id="diff-view-btn" aria-label="مقایسه تغییرات" class="header-btn h-8 px-3 rounded-lg text-xs text-white flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700" title="مقایسه تغییرات">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"></path>
             </svg>
@@ -124,6 +116,17 @@
       </div>
     </header>
 <!-- /Header -->
+
+    <!-- AI Translation Status Badge -->
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3">
+      <div id="ai-translate-badge" class="hidden md:flex items-center gap-2 bg-gradient-to-l from-violet-50 to-purple-50 border border-violet-200 rounded-xl px-4 py-2 cursor-pointer hover:border-violet-300">
+        <svg class="h-4 w-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+        </svg>
+        <span class="text-sm text-violet-700 font-medium">ترجمه هوشمند هوش مصنوعی</span>
+        <span id="ai-translate-status" class="text-xs text-emerald-500">(فعال)</span>
+      </div>
+    </div>
 
     <!-- Main Content -->
     <main role="main" class="flex-1 flex flex-col lg:flex-row max-w-screen-2xl mx-auto w-full">
@@ -201,7 +204,7 @@
       <!-- Workspace (hidden initially) -->
       <div id="workspace" class="hidden flex-1 flex flex-col lg:flex-row w-full">
         <!-- Sidebar -->
-        <aside class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-l border-slate-200 bg-white lg:h-[calc(100vh-64px)] lg:sticky lg:top-16 overflow-y-auto scrollbar-thin">
+        <aside class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-l border-slate-200 bg-white lg:h-[calc(100vh-64px)] lg:sticky lg:top-20 z-40 overflow-y-auto scrollbar-thin">
           <div class="p-4 space-y-5">
             <!-- File Info -->
             <div class="space-y-2">
@@ -370,7 +373,7 @@
               <span id="results-count">۰ رشته</span>
               <div class="flex items-center gap-2">
                 <span id="filter-mode-text">نمایش همه</span>
-                <select id="page-size" class="hidden bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[11px] text-slate-600">
+                <select id="page-size" class="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[11px] text-slate-600">
                   <option value="25">۲۵ ردیف</option>
                   <option value="50">۵۰ ردیف</option>
                   <option value="100">۱۰۰ ردیف</option>
@@ -444,6 +447,13 @@
             </svg>
             سرویس ترجمه خودکار
           </h3>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-600">ترجمه هوشمند</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="ai-translate-enabled" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+            </label>
+          </div>
           <div class="space-y-2">
             <label class="flex items-center gap-2 text-xs text-slate-600">
               <input type="radio" name="api-service" value="google" class="text-emerald-600"> Google Translate
@@ -631,6 +641,80 @@
     // Check if content is XML
     function isXMLContent(content) {
       return content.trim().startsWith('<?xml') || content.trim().startsWith('<resources');
+    }
+
+    const FormatHandlers = {
+      json: {
+        parse(content) {
+          return { flat: flattenJSON(JSON.parse(content)), metadata: [] };
+        },
+        serialize(translations) {
+          return JSON.stringify(unflattenJSON(translations), null, 2);
+        }
+      },
+      xml: {
+        parse(content) {
+          return parseXML(content);
+        },
+        serialize(translations, metadata) {
+          return serializeXML(translations, metadata);
+        }
+      },
+      yaml: {
+        parse(content) {
+          return parseYAMLFile(content);
+        },
+        serialize(translations) {
+          return serializeYAML(translations);
+        }
+      },
+      properties: {
+        parse(content) {
+          return parseProperties(content);
+        },
+        serialize(translations) {
+          return serializeProperties(translations);
+        }
+      },
+      csv: {
+        parse(content) {
+          return parseCSV(content);
+        },
+        serialize(translations) {
+          return serializeCSV(translations);
+        }
+      },
+      ini: {
+        parse(content) {
+          return parseINI(content);
+        },
+        serialize(translations) {
+          return serializeINI(translations);
+        }
+      },
+      po: {
+        parse(content) {
+          return parsePO(content);
+        },
+        serialize(translations) {
+          return serializePO(translations);
+        }
+      }
+    };
+
+    function parseFileContent(content, filename) {
+      const detectedType = detectFileType(filename);
+      const isXml = detectedType === 'xml' || isXMLContent(content);
+      const fileType = isXml ? 'xml' : detectedType;
+      const result = fileType === 'json'
+        ? FormatHandlers.json.parse(content)
+        : FormatHandlers[fileType].parse(content);
+      return { ...result, fileType };
+    }
+
+    function serializeTranslations(format, translations, metadata = []) {
+      const handler = FormatHandlers[format] || FormatHandlers.json;
+      return handler.serialize(translations, metadata);
     }
 
     // Parse YAML content (simple parser for key-value pairs)
@@ -959,7 +1043,8 @@
         googleApiKey: '',
         deeplApiKey: '',
         deeplIsPro: false,
-        preferredService: 'google'
+        preferredService: 'google',
+        enabled: true
       },
 
       loadConfig() {
@@ -976,12 +1061,21 @@
       async translate(text, targetLang, sourceLang = 'auto') {
         if (!text || typeof text !== 'string') return text;
         
+        // Check if AI translation is enabled
+        if (!this.config.enabled) {
+          throw new Error('ترجمه هوشمند غیرفعال است. لطفاً از تنظیمات آن را فعال کنید.');
+        }
+        
         if (this.config.preferredService === 'google' && this.config.googleApiKey) {
           return this.translateGoogle(text, targetLang, sourceLang);
         } else if (this.config.preferredService === 'deepl' && this.config.deeplApiKey) {
           return this.translateDeepL(text, targetLang, sourceLang);
         }
         throw new Error('API ترجمه پیکربندی نشده است. لطفاً ابتدا کلید API را در تنظیمات وارد کنید.');
+      },
+
+      isEnabled() {
+        return this.config.enabled === true;
       },
 
       async translateGoogle(text, targetLang, sourceLang) {
@@ -1553,6 +1647,7 @@
       sourceFileName: '',
       targetFileName: '',
       sourceFileType: 'json',
+      targetFileType: '',
       xmlMetadata: [],
       filterMode: 'all',
       currentPage: 1,
@@ -1572,6 +1667,10 @@
           const saved = JSON.parse(raw);
           state = { ...state, ...saved };
         }
+        // Load AI Translation config
+        TranslationService.loadConfig();
+        // Ensure badge reflects current state after loading config
+        updateAITranslationBadge();
       } catch (e) {
         console.error('Failed to load from storage:', e);
       }
@@ -1616,6 +1715,17 @@
       const percentage = total > 0 ? Math.round((translated / total) * 100) : 0;
       
       return { total, translated, missing, percentage };
+    }
+
+    function updateProgressUI() {
+      const progress = calculateProgress();
+      document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
+      document.getElementById('progress-text').textContent =
+        `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
+      document.getElementById('translated-count').textContent = toPersianNumber(progress.translated);
+      document.getElementById('missing-count').textContent = toPersianNumber(progress.missing);
+      document.getElementById('filter-count-translated').textContent = toPersianNumber(progress.translated);
+      document.getElementById('filter-count-missing').textContent = toPersianNumber(progress.missing);
     }
 
     function getFilteredEntries() {
@@ -1739,18 +1849,9 @@
         `;
       }
       
-      // Update progress
-      const progress = calculateProgress();
-      document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
-      document.getElementById('progress-text').textContent = 
-        `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
-      document.getElementById('translated-count').textContent = toPersianNumber(progress.translated);
-      document.getElementById('missing-count').textContent = toPersianNumber(progress.missing);
-      
-      // Update filter counts
+      // Update progress bar and counts using centralized UI helper
+      updateProgressUI();
       document.getElementById('filter-count-all').textContent = toPersianNumber(Object.keys(state.sourceKeys).length);
-      document.getElementById('filter-count-missing').textContent = toPersianNumber(progress.missing);
-      document.getElementById('filter-count-translated').textContent = toPersianNumber(progress.translated);
       
       // Update filter buttons - improved to ensure correct visual state
       const filterButtons = document.querySelectorAll('.filter-btn');
@@ -1832,6 +1933,35 @@
       
       // Save to storage
       saveToStorage();
+      
+      // Update AI Translation badge
+      updateAITranslationBadge();
+    }
+
+    function updateAITranslationBadge() {
+      const badge = document.getElementById('ai-translate-badge');
+      const statusEl = document.getElementById('ai-translate-status');
+      const checkbox = document.getElementById('ai-translate-enabled');
+      
+      if (!badge || !statusEl) return;
+      
+      const isEnabled = TranslationService.config.enabled === true;
+      
+      // Update checkbox in settings
+      if (checkbox) {
+        checkbox.checked = isEnabled;
+      }
+      
+      // Update badge status
+      if (isEnabled) {
+        statusEl.textContent = '(فعال)';
+        statusEl.className = 'text-xs text-emerald-500';
+        badge.classList.remove('opacity-50');
+      } else {
+        statusEl.textContent = '(غیرفعال)';
+        statusEl.className = 'text-xs text-amber-500';
+        badge.classList.add('opacity-50');
+      }
     }
 
     function createTranslationRow(entry) {
@@ -1942,15 +2072,7 @@
       textarea.addEventListener('input', (e) => {
         state.targetTranslations[entry.key] = e.target.value;
         saveToStorage();
-        // Update progress without full re-render
-        const progress = calculateProgress();
-        document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
-        document.getElementById('progress-text').textContent = 
-          `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
-        document.getElementById('translated-count').textContent = toPersianNumber(progress.translated);
-        document.getElementById('missing-count').textContent = toPersianNumber(progress.missing);
-        document.getElementById('filter-count-translated').textContent = toPersianNumber(progress.translated);
-        document.getElementById('filter-count-missing').textContent = toPersianNumber(progress.missing);
+        updateProgressUI();
       });
       
       textarea.addEventListener('keydown', (e) => {
@@ -1991,12 +2113,8 @@
           
           state.targetTranslations[entry.key] = newValue;
           textarea.value = newValue;
-          
-          // به‌روزرسانی شمارنده‌ها بدون رندر مجدد کل صفحه
-          const progress = calculateProgress();
-          document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
-          document.getElementById('progress-text').textContent = 
-            `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
+          saveToStorage();
+          updateProgressUI();
           
           requestAnimationFrame(() => {
             textarea.selectionStart = textarea.selectionEnd = start + char.length;
@@ -2019,43 +2137,10 @@
         let flat, fileType, metadata = [];
         try {
           const content = event.target.result;
-          const detectedType = detectFileType(file.name);
-          
-          if (detectedType === 'xml' || isXMLContent(content)) {
-            const result = parseXML(content);
-            flat = result.flat;
-            fileType = 'xml';
-            metadata = result.metadata;
-          } else if (detectedType === 'yaml') {
-            const result = parseYAMLFile(content);
-            flat = result.flat;
-            fileType = 'yaml';
-            metadata = result.metadata;
-          } else if (detectedType === 'properties') {
-            const result = parseProperties(content);
-            flat = result.flat;
-            fileType = 'properties';
-            metadata = result.metadata;
-          } else if (detectedType === 'csv') {
-            const result = parseCSV(content);
-            flat = result.flat;
-            fileType = 'csv';
-            metadata = result.metadata;
-          } else if (detectedType === 'ini') {
-            const result = parseINI(content);
-            flat = result.flat;
-            fileType = 'ini';
-            metadata = result.metadata;
-          } else if (detectedType === 'po') {
-            const result = parsePO(content);
-            flat = result.flat;
-            fileType = 'po';
-            metadata = result.metadata;
-          } else {
-            const json = JSON.parse(content);
-            flat = flattenJSON(json);
-            fileType = 'json';
-          }
+          const result = parseFileContent(content, file.name);
+          flat = result.flat;
+          fileType = result.fileType;
+          metadata = result.metadata || [];
           
           state.sourceKeys = flat;
           state.sourceFileName = file.name;
@@ -2094,45 +2179,30 @@
       reader.onload = (event) => {
         try {
           const content = event.target.result;
-          let flat;
-          const targetFileType = detectFileType(file.name);
-          
-          if (targetFileType === 'xml' || isXMLContent(content)) {
-            const result = parseXML(content);
-            flat = result.flat;
-          } else if (targetFileType === 'yaml') {
-            const result = parseYAMLFile(content);
-            flat = result.flat;
-          } else if (targetFileType === 'properties') {
-            const result = parseProperties(content);
-            flat = result.flat;
-          } else if (targetFileType === 'csv') {
-            const result = parseCSV(content);
-            flat = result.flat;
-          } else if (targetFileType === 'ini') {
-            const result = parseINI(content);
-            flat = result.flat;
-          } else if (targetFileType === 'po') {
-            const result = parsePO(content);
-            flat = result.flat;
-          } else {
-            const json = JSON.parse(content);
-            flat = flattenJSON(json);
-          }
+          const result = parseFileContent(content, file.name);
+          const flat = result.flat;
+          const targetFileType = result.fileType;
           
           // Check if file types match for better UX
-          if (state.sourceFileType && targetFileType !== state.sourceFileType) {
+          if (state.sourceFileType && targetFileType && targetFileType !== state.sourceFileType) {
             const sourceType = state.sourceFileType === 'xml' ? 'XML' : 
                               state.sourceFileType === 'yaml' ? 'YAML' : 
-                              state.sourceFileType === 'properties' ? 'Properties' : 'JSON';
+                              state.sourceFileType === 'properties' ? 'Properties' :
+                              state.sourceFileType === 'csv' ? 'CSV' :
+                              state.sourceFileType === 'ini' ? 'INI' :
+                              state.sourceFileType === 'po' ? 'PO' : 'JSON';
             const targetType = targetFileType === 'xml' ? 'XML' : 
                               targetFileType === 'yaml' ? 'YAML' : 
-                              targetFileType === 'properties' ? 'Properties' : 'JSON';
+                              targetFileType === 'properties' ? 'Properties' :
+                              targetFileType === 'csv' ? 'CSV' :
+                              targetFileType === 'ini' ? 'INI' :
+                              targetFileType === 'po' ? 'PO' : 'JSON';
             showToast('هشدار نوع فایل', `فایل مبدا ${sourceType} است اما فایل مقصد ${targetType} است. ممکن است برخی کلیدها مطابقت نداشته باشند.`, 'default');
           }
           
           state.targetTranslations = { ...state.targetTranslations, ...flat };
           state.targetFileName = file.name;
+          state.targetFileType = targetFileType;
           
           const matched = Object.keys(flat).filter(k => k in state.sourceKeys).length;
           showToast('فایل مقصد بارگذاری شد', `${toPersianNumber(matched)} کلید مطابقت داشت از ${toPersianNumber(Object.keys(flat).length)} کلید`);
@@ -2158,36 +2228,33 @@
         }
       }
       
-      if (exportFormat === 'xml') {
-        content = serializeXML(finalTranslations, state.xmlMetadata);
-        mimeType = 'application/xml';
-        defaultFileName = state.targetFileName || 'fa.xml';
-      } else if (exportFormat === 'yaml') {
-        content = serializeYAML(finalTranslations);
-        mimeType = 'text/yaml';
-        defaultFileName = state.targetFileName || 'fa.yaml';
-      } else if (exportFormat === 'properties') {
-        content = serializeProperties(finalTranslations);
-        mimeType = 'text/plain';
-        defaultFileName = state.targetFileName || 'fa.properties';
-      } else if (exportFormat === 'csv') {
-        content = serializeCSV(finalTranslations);
-        mimeType = 'text/csv';
+      // Use centralized FormatHandlers to serialize based on selected format
+      const fmt = exportFormat;
+      const handler = FormatHandlers[fmt] || FormatHandlers.json;
+      const metadata = fmt === 'xml' ? state.xmlMetadata : [];
+      // Pass metadata when handler expects it; many handlers ignore extra args safely
+      content = handler.serialize(finalTranslations, metadata);
+
+      const mimeMap = {
+        json: 'application/json',
+        xml: 'application/xml',
+        yaml: 'text/yaml',
+        properties: 'text/plain',
+        csv: 'text/csv',
+        ini: 'text/plain',
+        po: 'text/plain'
+      };
+      mimeType = mimeMap[fmt] || 'text/plain';
+
+      // Determine default filename, preserving target name when provided
+      if (fmt === 'csv') {
         defaultFileName = state.targetFileName ? state.targetFileName.replace(/\.\w+$/, '.csv') : 'fa.csv';
-      } else if (exportFormat === 'ini') {
-        content = serializeINI(finalTranslations);
-        mimeType = 'text/plain';
+      } else if (fmt === 'ini') {
         defaultFileName = state.targetFileName ? state.targetFileName.replace(/\.\w+$/, '.ini') : 'fa.ini';
-      } else if (exportFormat === 'po') {
-        content = serializePO(finalTranslations);
-        mimeType = 'text/plain';
+      } else if (fmt === 'po') {
         defaultFileName = state.targetFileName ? state.targetFileName.replace(/\.\w+$/, '.po') : 'fa.po';
       } else {
-        // JSON
-        const nested = unflattenJSON(finalTranslations);
-        content = JSON.stringify(nested, null, 2);
-        mimeType = 'application/json';
-        defaultFileName = state.targetFileName || 'fa.json';
+        defaultFileName = state.targetFileName || (`fa.${fmt === 'properties' ? 'properties' : fmt}`);
       }
       
       const blob = new Blob([content], { type: mimeType });
@@ -2453,6 +2520,8 @@
         }
       } else {
         loadFromStorage();
+        // Sync AI translation badge after loading config
+        updateAITranslationBadge();
       }
       
       // Set up event listeners
@@ -2489,6 +2558,13 @@
         if (wrapper && !wrapper.contains(e.target)) {
           dropdown?.classList.add('hidden');
         }
+      });
+
+      // AI Translate badge click to toggle via settings checkbox
+      document.getElementById('ai-translate-badge').addEventListener('click', () => {
+        const checkbox = document.getElementById('ai-translate-enabled');
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
       });
       
       // AI Translate
@@ -2545,6 +2621,14 @@
         modal.addEventListener('click', (e) => {
           if (e.target === modal) modal.classList.add('hidden');
         });
+      });
+      
+      // AI Translation enabled toggle
+      document.getElementById('ai-translate-enabled').addEventListener('change', (e) => {
+        TranslationService.config.enabled = e.target.checked;
+        TranslationService.saveConfig();
+        updateAITranslationBadge();
+        showToast(e.target.checked ? 'ترجمه هوشمند فعال شد' : 'ترجمه هوشمند غیرفعال شد');
       });
       
       // API service radio toggle
