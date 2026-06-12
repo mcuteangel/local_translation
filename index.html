@@ -9,7 +9,8 @@
     content="ابزار ترجمه محلی برای فایل‌های JSON, XML, YAML, Properties, CSV, INI و PO با هوش مصنوعی" />
   <title>ابزار ترجمه محلی</title>
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://translation.googleapis.com https://api-free.deepl.com https://api.deepl.com; img-src 'self' data:;">
+    content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src https://cdn.jsdelivr.net; connect-src 'self' https://translation.googleapis.com https://api-free.deepl.com https://api.deepl.com; img-src 'self' data:;">
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * {
@@ -1377,7 +1378,7 @@
     function escapeForCSV(val) {
       let output = typeof val === "string" ? val : String(val || "");
       if (/^[=\+\-\@\t\r]/.test(output)) {
-        output = "\t" + output;
+        output = "'" + output;
       }
       return '"' + output.replace(/"/g, '""') + '"';
     }
@@ -1735,41 +1736,19 @@
           ["deriveKey"],
         );
 
-        // در هر بار init ساخته میشه
         const SALT_KEY = "translation-tool-salt";
         let saltBase64 = localStorage.getItem(SALT_KEY);
 
-        // اگر منقضی شود، salt جدید بساز
-        const saltMetaKey = SALT_KEY + "-meta";
-        let saltMeta = null;
-        try {
-          saltMeta = JSON.parse(localStorage.getItem(saltMetaKey) || "null");
-        } catch {
-          // ignore
-        }
-
-        const shouldRotateSalt =
-          !saltBase64 ||
-          !saltMeta ||
-          saltMeta.iterations !== 600000 ||
-          Date.now() - saltMeta.createdAt > 1000 * 60 * 60 * 24 * 30;
-
-        if (shouldRotateSalt) {
+        if (!saltBase64) {
           const randomSalt = crypto.getRandomValues(new Uint8Array(16));
           saltBase64 = btoa(String.fromCharCode(...randomSalt));
           localStorage.setItem(SALT_KEY, saltBase64);
-          localStorage.setItem(
-            saltMetaKey,
-            JSON.stringify({
-              createdAt: Date.now(),
-              iterations: 600000,
-            }),
-          );
         }
 
         const saltBytes = Uint8Array.from(atob(saltBase64), (c) =>
           c.charCodeAt(0),
         );
+
         this.key = await crypto.subtle.deriveKey(
           {
             name: "PBKDF2",
@@ -1819,10 +1798,10 @@
       async secureSave(data) {
         try {
           const encrypted = await this.encrypt(data);
-          localStorage.setItem(STORAGE_KEY + "-encrypted", encrypted);
-          localStorage.setItem(
+          await dbSet(STORAGE_KEY + "-encrypted", encrypted);
+          await dbSet(
             STORAGE_KEY + "-enc-meta",
-            JSON.stringify({ enabled: true, timestamp: Date.now() }),
+            { enabled: true, timestamp: Date.now() },
           );
           localStorage.removeItem(STORAGE_KEY);
           return true;
@@ -1834,11 +1813,9 @@
 
       async secureLoad() {
         try {
-          const meta = localStorage.getItem(STORAGE_KEY + "-enc-meta");
-          if (meta && JSON.parse(meta).enabled) {
-            const encrypted = localStorage.getItem(
-              STORAGE_KEY + "-encrypted",
-            );
+          const meta = await dbGet(STORAGE_KEY + "-enc-meta");
+          if (meta && meta.enabled) {
+            const encrypted = await dbGet(STORAGE_KEY + "-encrypted");
             if (encrypted) return await this.decrypt(encrypted);
           }
         } catch (e) {
@@ -1848,8 +1825,8 @@
       },
 
       clear() {
-        localStorage.removeItem(STORAGE_KEY + "-encrypted");
-        localStorage.removeItem(STORAGE_KEY + "-enc-meta");
+        dbDelete(STORAGE_KEY + "-encrypted");
+        dbDelete(STORAGE_KEY + "-enc-meta");
       },
     };
 
@@ -2198,7 +2175,8 @@
       keyEl.textContent = key;
 
       const valueEl = document.createElement("div");
-      valueEl.className = "whitespace-pre-wrap break-words dir-ltr text-left";
+      valueEl.className = "whitespace-pre-wrap break-words";
+      valueEl.dir = "auto";
       const stringValue = String(value ?? "");
       if (stringValue) {
         valueEl.textContent = stringValue;
@@ -2473,6 +2451,85 @@
       return pages;
     }
 
+    // ===== IndexedDB Storage (for large workspaces) =====
+
+    const DB_NAME = "TranslationToolDB";
+    const DB_VERSION = 1;
+    const DB_STORE = "workspace";
+
+    let _dbInstance = null;
+
+    function openDB() {
+      if (_dbInstance) return Promise.resolve(_dbInstance);
+      return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+          reject(new Error("IndexedDB not supported"));
+          return;
+        }
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(DB_STORE)) {
+            db.createObjectStore(DB_STORE);
+          }
+        };
+        request.onsuccess = (e) => {
+          _dbInstance = e.target.result;
+          resolve(_dbInstance);
+        };
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function dbSet(key, value) {
+      return openDB().then((db) => {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(DB_STORE, "readwrite");
+          tx.objectStore(DB_STORE).put(value, key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      }).catch(() => {
+        // IndexedDB failed — fall back to localStorage
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (e) {
+          console.error("localStorage fallback failed:", e);
+        }
+      });
+    }
+
+    function dbGet(key) {
+      return openDB().then((db) => {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(DB_STORE, "readonly");
+          const req = tx.objectStore(DB_STORE).get(key);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }).catch(() => {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : null;
+        } catch {
+          return null;
+        }
+      });
+    }
+
+    function dbDelete(key) {
+      return openDB().then((db) => {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(DB_STORE, "readwrite");
+          tx.objectStore(DB_STORE).delete(key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      }).catch(() => {
+        try { localStorage.removeItem(key); } catch { /* ignore */ }
+      });
+    }
+
     // ===== State Management =====
 
     const STORAGE_KEY = "translation-tool-workspace";
@@ -2624,7 +2681,7 @@
           if (EncryptionModule.enabled && EncryptionModule.key) {
             await EncryptionModule.secureSave(payload);
           } else {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            await dbSet(STORAGE_KEY, payload);
             EncryptionModule.clear();
           }
         } catch (e) {
@@ -2634,26 +2691,12 @@
 
       async loadPlain() {
         try {
-          const raw = localStorage.getItem(STORAGE_KEY);
+          const raw = await dbGet(STORAGE_KEY);
           if (!raw) return null;
-          return this.normalizePayload(JSON.parse(raw));
+          return this.normalizePayload(raw);
         } catch (e) {
           console.error("Failed to load workspace:", e);
           return null;
-        }
-      },
-
-      async save() {
-        const payload = this.buildPayload();
-        try {
-          if (EncryptionModule.enabled && EncryptionModule.key) {
-            await EncryptionModule.secureSave(payload);
-          } else {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-            EncryptionModule.clear();
-          }
-        } catch (e) {
-          console.error("Failed to save workspace:", e);
         }
       },
     };
@@ -2672,6 +2715,20 @@
 
     async function loadFromStorage() {
       try {
+        // Migration: if data exists in localStorage, migrate to IndexedDB
+        try {
+          const legacyRaw = localStorage.getItem(STORAGE_KEY);
+          if (legacyRaw) {
+            const legacyData = JSON.parse(legacyRaw);
+            await dbSet(STORAGE_KEY, legacyData);
+            localStorage.removeItem(STORAGE_KEY);
+            console.log("Migrated workspace data from localStorage to IndexedDB");
+          }
+        } catch (migrateErr) {
+          // Migration is best-effort
+          console.warn("Storage migration skipped:", migrateErr);
+        }
+
         const saved = await WorkspaceStorage.loadPlain();
         if (saved) {
           state.restore(saved);
@@ -2726,7 +2783,7 @@
 
       const missing = total - translated;
       const percentage =
-        total > 0 ? Math.round((translated / total) * 100) : 0;
+        total > 0 ? Math.floor((translated / total) * 100) : 0;
 
       return { total, translated, missing, percentage };
     }
@@ -3175,9 +3232,32 @@
 
     // ===== Event Handlers =====
 
+    const VALID_EXTENSIONS = [".json", ".xml", ".yaml", ".yml", ".properties", ".csv", ".ini", ".po"];
+
+    function getFileExtension(filename) {
+      const dot = filename.lastIndexOf(".");
+      return dot === -1 ? "" : filename.slice(dot).toLowerCase();
+    }
+
+    function validateFile(file) {
+      if (!file) return "فایلی انتخاب نشده است";
+      const ext = getFileExtension(file.name);
+      if (!ext || !VALID_EXTENSIONS.includes(ext)) {
+        return `فرمت "${ext || "نامشخص"}" پشتیبانی نمی‌شود. فرمت‌های مجاز: JSON, XML, YAML, Properties, CSV, INI, PO`;
+      }
+      return null;
+    }
+
     function handleSourceFile(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      const validationError = validateFile(file);
+      if (validationError) {
+        showToast("فرمت فایل نامعتبر", validationError, "destructive");
+        e.target.value = "";
+        return;
+      }
 
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -3190,6 +3270,17 @@
           flat = result.flat;
           fileType = result.fileType;
           metadata = result.metadata || [];
+
+          // Validate detected type matches extension
+          const ext = getFileExtension(file.name).replace(".", "");
+          const detectedExtType = detectFileType(file.name);
+          if (detectedExtType !== fileType && fileType !== "json") {
+            showToast(
+              "هشدار نوع فایل",
+              `پسوند فایل "${ext}" با محتوای "${fileType}" مطابقت ندارد`,
+              "default",
+            );
+          }
 
           state.sourceKeys = flat;
           state.sourceFileName = file.name;
@@ -3209,6 +3300,7 @@
             "فایل معتبر نیست. لطفاً فایل JSON، XML، YAML، Properties، CSV، INI یا PO بارگذاری کنید",
             "destructive",
           );
+          e.target.value = "";
           return;
         }
 
@@ -3219,12 +3311,23 @@
           console.error("UI Render Error: ", uiErr);
         }
       };
+      reader.onerror = () => {
+        showToast("خطا در خواندن فایل", "امکان خواندن فایل وجود ندارد", "destructive");
+        e.target.value = "";
+      };
       reader.readAsText(file);
     }
 
     function handleTargetFile(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      const validationError = validateFile(file);
+      if (validationError) {
+        showToast("فرمت فایل نامعتبر", validationError, "destructive");
+        e.target.value = "";
+        return;
+      }
 
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -3233,6 +3336,17 @@
           const result = parseFileContent(content, file.name);
           const flat = result.flat;
           const targetFileType = result.fileType;
+
+          // Validate detected type matches extension
+          const ext = getFileExtension(file.name).replace(".", "");
+          const detectedExtType = detectFileType(file.name);
+          if (detectedExtType !== targetFileType && targetFileType !== "json") {
+            showToast(
+              "هشدار نوع فایل",
+              `پسوند فایل "${ext}" با محتوای "${targetFileType}" مطابقت ندارد`,
+              "default",
+            );
+          }
 
           // Check if file types match for better UX
           if (
@@ -3269,7 +3383,12 @@
             "فایل معتبر نیست. لطفاً فایل JSON، XML، YAML، Properties، CSV، INI یا PO بارگذاری کنید",
             "destructive",
           );
+          e.target.value = "";
         }
+      };
+      reader.onerror = () => {
+        showToast("خطا در خواندن فایل", "امکان خواندن فایل وجود ندارد", "destructive");
+        e.target.value = "";
       };
       reader.readAsText(file);
     }
@@ -3375,7 +3494,8 @@
           "لطفاً ابتدا کلید API را در تنظیمات وارد کنید.",
           "destructive",
         );
-        document.getElementById("settings-btn").click();
+        document.getElementById("settings-modal").classList.remove("hidden");
+        document.getElementById("api-key-input").focus();
         return;
       }
 
@@ -4166,10 +4286,10 @@
         const key = textarea.dataset.key;
         const allFilteredEntries = getFilteredEntries();
         const currentIndex = allFilteredEntries.findIndex((ent) => ent.key === key);
-        const nextMissing = allFilteredEntries.find((ent, idx) => idx > currentIndex && !ent.isTranslated);
+        const nextIndex = allFilteredEntries.findIndex((ent, idx) => idx > currentIndex && !ent.isTranslated);
 
-        if (nextMissing) {
-          const nextIndex = allFilteredEntries.indexOf(nextMissing);
+        if (nextIndex !== -1) {
+          const nextMissing = allFilteredEntries[nextIndex];
           state.currentPage = Math.floor(nextIndex / state.pageSize) + 1;
           updateUI();
           requestAnimationFrame(() => {
