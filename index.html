@@ -10,7 +10,8 @@
   <title>ابزار ترجمه محلی</title>
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src https://cdn.jsdelivr.net; connect-src 'self' https://translation.googleapis.com https://api-free.deepl.com https://api.deepl.com; img-src 'self' data:;">
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"
+    type="text/css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * {
@@ -614,8 +615,11 @@
                 class="absolute left-1.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors"
                 aria-label="نمایش/مخفی کردن کلید API">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                  </path>
                 </svg>
               </button>
             </div>
@@ -630,7 +634,8 @@
             ذخیره تنظیمات API
           </button>
           <p class="text-[10px] text-amber-500 bg-amber-50 px-2 py-1.5 rounded-lg leading-relaxed">
-            ⚠️ کلید API شما فقط در مرورگر خودتان ذخیره می‌شود و به هیچ سرور واسطی ارسال نخواهد شد. برای حذف امن آن، از دکمه "پاک کردن فضای کار" استفاده کنید.
+            ⚠️ کلید API شما فقط در مرورگر خودتان ذخیره می‌شود و به هیچ سرور واسطی ارسال نخواهد شد. برای حذف امن آن، از
+            دکمه "پاک کردن فضای کار" استفاده کنید.
           </p>
         </div>
 
@@ -816,6 +821,35 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+    }
+
+    // Reusable SVG icon strings
+    const SVG_CHECK = '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+    const SVG_COPY = '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+    const SVG_ARROW_LEFT = '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
+
+    // Check if a translation value is non-empty
+    function isTranslated(val) {
+      if (val === undefined || val === null) return false;
+      if (typeof val === "object" && !Array.isArray(val)) {
+        const entries = Object.values(val);
+        return entries.length > 0 && entries.every((v) => String(v).trim() !== "");
+      }
+      return String(val).trim() !== "";
+    }
+
+    // Get all untranslated source keys
+    function getUntranslatedKeys() {
+      return Object.keys(state.sourceKeys).filter((k) => !isTranslated(state.targetTranslations[k]));
+    }
+
+    // Create a small icon button (used for copy, copy-to, etc.)
+    function createIconBtn(className, title, innerHTML) {
+      const btn = document.createElement("button");
+      btn.className = className;
+      btn.title = title;
+      btn.innerHTML = innerHTML;
+      return btn;
     }
 
     // Flatten nested JSON object using iterative stack approach for performance
@@ -1559,96 +1593,16 @@
       },
 
       getLanguageCode(langName) {
-        const map = {
-          fa: "fa",
-          persian: "fa",
-          فارسی: "fa",
-          en: "en",
-          english: "en",
-          انگلیسی: "en",
-          ar: "ar",
-          arabic: "ar",
-          عربی: "ar",
-          de: "de",
-          german: "de",
-          آلمانی: "de",
-          fr: "fr",
-          french: "fr",
-          فرانسوی: "fr",
-          es: "es",
-          spanish: "es",
-          اسپانیایی: "es",
-          ru: "ru",
-          russian: "ru",
-          روسی: "ru",
-          zh: "zh",
-          chinese: "zh",
-          چینی: "zh",
-          ja: "ja",
-          japanese: "ja",
-          ژاپنی: "ja",
-          ko: "ko",
-          korean: "ko",
-          کره‌ای: "ko",
-          tr: "tr",
-          turkish: "tr",
-          ترکی: "tr",
-          ur: "ur",
-          urdu: "ur",
-          اردو: "ur",
-          hi: "hi",
-          hindi: "hi",
-          هندی: "hi",
-          pt: "pt",
-          portuguese: "pt",
-          پرتغالی: "pt",
-          it: "it",
-          italian: "it",
-          ایتالیایی: "it",
-          nl: "nl",
-          dutch: "nl",
-          هلندی: "nl",
-          sv: "sv",
-          swedish: "sv",
-          سوئدی: "sv",
-          da: "da",
-          danish: "da",
-          دانمارکی: "da",
-          fi: "fi",
-          finnish: "fi",
-          فنلاندی: "fi",
-          no: "no",
-          norwegian: "no",
-          نروژی: "no",
-          pl: "pl",
-          polish: "pl",
-          لهستانی: "pl",
-          cs: "cs",
-          czech: "cs",
-          چکی: "cs",
-          sk: "sk",
-          slovak: "sk",
-          اسلواکی: "sk",
-          hu: "hu",
-          hungarian: "hu",
-          مجارستانی: "hu",
-          ro: "ro",
-          romanian: "ro",
-          رومانیایی: "ro",
-          th: "th",
-          thai: "th",
-          تایلندی: "th",
-          vi: "vi",
-          vietnamese: "vi",
-          ویتنامی: "vi",
-          id: "id",
-          indonesian: "id",
-          اندونزیایی: "id",
-          ms: "ms",
-          malay: "ms",
-          مالایی: "ms",
-        };
-        return map[langName.toLowerCase()] || langName;
+        const lower = langName.toLowerCase();
+        for (const [code, locale] of Object.entries(SUPPORTED_LOCALES)) {
+          if (
+            code === lower ||
+            locale.name.toLowerCase() === lower
+          ) {
+            return code;
+          }
+        }
+        return langName;
       },
 
       async translateBatch(
@@ -1850,10 +1804,7 @@
           label: label || `نسخه ${this.versions.length + 1}`,
           data: deepClone(translations),
           totalKeys: Object.keys(translations).length,
-          translatedKeys: Object.keys(translations).filter((k) => {
-            const v = translations[k];
-            return v !== undefined && v !== null && String(v).trim() !== "";
-          }).length,
+          translatedKeys: Object.keys(translations).filter((k) => isTranslated(translations[k])).length,
         });
         if (this.versions.length > this.maxVersions) {
           this.versions = this.versions.slice(-this.maxVersions);
@@ -2764,10 +2715,7 @@
 
     function calculateProgress() {
       const total = Object.keys(state.sourceKeys).length;
-      const translated = Object.keys(state.targetTranslations).filter((k) => {
-        const val = state.targetTranslations[k];
-        return val !== undefined && val !== null && String(val).trim() !== "";
-      }).length;
+      const translated = Object.keys(state.targetTranslations).filter((k) => isTranslated(state.targetTranslations[k])).length;
 
       const missing = total - translated;
       const percentage =
@@ -2804,14 +2752,11 @@
         if (!Object.prototype.hasOwnProperty.call(sourceKeys, key)) continue;
 
         const sourceValue = sourceKeys[key];
-        const targetValue = targetTranslations[key] || "";
-        const isTranslated =
-          targetValue !== undefined &&
-          targetValue !== null &&
-          String(targetValue).trim() !== "";
+        const targetValue = targetTranslations[key];
+        const translated = isTranslated(targetValue);
 
-        if (filterMode === "missing" && isTranslated) continue;
-        if (filterMode === "translated" && !isTranslated) continue;
+        if (filterMode === "missing" && translated) continue;
+        if (filterMode === "translated" && !translated) continue;
 
         if (query) {
           const sourceStr = String(sourceValue || "").toLowerCase();
@@ -2827,7 +2772,7 @@
           }
         }
 
-        entries.push({ key, sourceValue, targetValue, isTranslated });
+        entries.push({ key, sourceValue, targetValue, isTranslated: translated });
       }
 
       return entries;
@@ -2867,14 +2812,9 @@
       fileInfo.innerHTML = "";
 
       if (state.sourceFileName) {
-        const icon =
-          state.sourceFileType === "xml"
-            ? '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>'
-            : state.sourceFileType === "yaml"
-              ? '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>'
-              : state.sourceFileType === "properties"
-                ? '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>'
-                : '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+        const fileIcon = '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+        const codeIcon = '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>';
+        const icon = state.sourceFileType === "xml" ? codeIcon : fileIcon;
 
         fileInfo.innerHTML += `
           <div class="flex items-center gap-2 text-xs bg-emerald-50 text-emerald-700 rounded-lg px-3 py-2">
@@ -3052,9 +2992,12 @@
       const safeTargetValue = escapeHtml(entry.targetValue);
       const safeKey = escapeHtml(entry.key);
 
+      const isPluralObj = typeof entry.sourceValue === "object" && entry.sourceValue !== null && !Array.isArray(entry.sourceValue);
       const specialChars = Array.isArray(entry.sourceValue)
         ? []
-        : extractSpecialChars(entry.sourceValue);
+        : isPluralObj
+          ? [...new Set(Object.values(entry.sourceValue).flatMap((v) => extractSpecialChars(v)))]
+          : extractSpecialChars(entry.sourceValue);
 
       div.className = `rounded-lg border transition-all duration-200 ${entry.isTranslated
         ? "border-emerald-200 bg-white"
@@ -3094,26 +3037,29 @@
         arrayBadge.className = "text-[9px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium";
         arrayBadge.textContent = "آرایه";
         header.appendChild(arrayBadge);
+      } else if (isPluralObj) {
+        const pluralBadge = document.createElement("span");
+        pluralBadge.className = "text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium";
+        pluralBadge.textContent = "جمع";
+        header.appendChild(pluralBadge);
       }
 
       const btnGroup = document.createElement("div");
       btnGroup.className = "flex items-center gap-1";
 
-      const copyBtn = document.createElement("button");
-      copyBtn.className = "copy-source-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors";
-      copyBtn.title = "کپی متن مبدا";
-      copyBtn.innerHTML = copiedKey === entry.key
-        ? '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
-        : '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+      const copyBtn = createIconBtn(
+        "copy-source-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors",
+        "کپی متن مبدا",
+        copiedKey === entry.key ? SVG_CHECK : SVG_COPY,
+      );
       btnGroup.appendChild(copyBtn);
 
       if (!Array.isArray(entry.sourceValue)) {
-        const copyToBtn = document.createElement("button");
-        copyToBtn.className = "copy-to-translation-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-emerald-600 transition-colors";
-        copyToBtn.title = "کپی متن مبدا به ترجمه";
-        copyToBtn.innerHTML = copiedToTranslationKey === entry.key
-          ? '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
-          : '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
+        const copyToBtn = createIconBtn(
+          "copy-to-translation-btn p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-emerald-600 transition-colors",
+          "کپی متن مبدا به ترجمه",
+          copiedToTranslationKey === entry.key ? SVG_CHECK : SVG_ARROW_LEFT,
+        );
         btnGroup.appendChild(copyToBtn);
       }
 
@@ -3151,6 +3097,20 @@
           line.appendChild(valSpan);
           sourceBox.appendChild(line);
         });
+      } else if (isPluralObj) {
+        Object.entries(entry.sourceValue).forEach(([quantity, val]) => {
+          const line = document.createElement("div");
+          line.className = "py-0.5 border-b border-slate-100 last:border-0";
+          const qSpan = document.createElement("span");
+          qSpan.className = "text-blue-600 font-medium";
+          qSpan.textContent = "[" + quantity + "]";
+          line.appendChild(qSpan);
+          const valSpan = document.createElement("span");
+          valSpan.dir = "ltr";
+          valSpan.textContent = " " + val;
+          line.appendChild(valSpan);
+          sourceBox.appendChild(line);
+        });
       } else if (entry.sourceValue) {
         sourceBox.textContent = entry.sourceValue;
       } else {
@@ -3185,6 +3145,26 @@
         readOnlyMsg.className = "text-sm text-slate-500 italic bg-slate-50 border border-slate-200 rounded-lg px-3 py-2";
         readOnlyMsg.textContent = "آرایه‌ها در این نسخه فقط خوانده‌شده‌اند. برای ویرایش، فایل XML را مستقیماً ویرایش کنید.";
         rightCol.appendChild(readOnlyMsg);
+      } else if (isPluralObj) {
+        const targetObj = (typeof entry.targetValue === "object" && entry.targetValue !== null && !Array.isArray(entry.targetValue))
+          ? entry.targetValue : {};
+        Object.keys(entry.sourceValue).forEach((quantity) => {
+          const fieldWrap = document.createElement("div");
+          fieldWrap.className = "mb-2 last:mb-0";
+          const label = document.createElement("label");
+          label.className = "text-[10px] text-blue-600 font-medium mb-0.5 block";
+          label.textContent = "[" + quantity + "]";
+          fieldWrap.appendChild(label);
+          const textarea = document.createElement("textarea");
+          textarea.dataset.key = entry.key;
+          textarea.dataset.quantity = quantity;
+          textarea.className = "plural-input w-full text-sm min-h-[2rem] resize-y leading-relaxed border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent";
+          textarea.placeholder = "ترجمه...";
+          textarea.dir = "auto";
+          textarea.value = targetObj[quantity] || "";
+          fieldWrap.appendChild(textarea);
+          rightCol.appendChild(fieldWrap);
+        });
       } else {
         const textarea = document.createElement("textarea");
         textarea.dataset.key = entry.key;
@@ -3219,6 +3199,32 @@
       return null;
     }
 
+    function readAndParseFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const content = event.target.result;
+            const result = parseFileContent(content, file.name);
+            const ext = getFileExtension(file.name).replace(".", "");
+            const detectedExtType = detectFileType(file.name);
+            if (detectedExtType !== result.fileType && result.fileType !== "json") {
+              showToast(
+                "هشدار نوع فایل",
+                `پسوند فایل "${ext}" با محتوای "${result.fileType}" مطابقت ندارد`,
+                "default",
+              );
+            }
+            resolve({ flat: result.flat, fileType: result.fileType, metadata: result.metadata || [] });
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = () => reject(new Error("امکان خواندن فایل وجود ندارد"));
+        reader.readAsText(file);
+      });
+    }
+
     function handleSourceFile(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -3230,63 +3236,28 @@
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        let flat,
-          fileType,
-          metadata = [];
-        try {
-          const content = event.target.result;
-          const result = parseFileContent(content, file.name);
-          flat = result.flat;
-          fileType = result.fileType;
-          metadata = result.metadata || [];
+      readAndParseFile(file).then(({ flat, fileType, metadata }) => {
+        state.sourceKeys = flat;
+        state.sourceFileName = file.name;
+        state.sourceFileType = fileType;
+        state.xmlMetadata = metadata;
+        state.currentPage = 1;
 
-          // Validate detected type matches extension
-          const ext = getFileExtension(file.name).replace(".", "");
-          const detectedExtType = detectFileType(file.name);
-          if (detectedExtType !== fileType && fileType !== "json") {
-            showToast(
-              "هشدار نوع فایل",
-              `پسوند فایل "${ext}" با محتوای "${fileType}" مطابقت ندارد`,
-              "default",
-            );
-          }
-
-          state.sourceKeys = flat;
-          state.sourceFileName = file.name;
-          state.sourceFileType = fileType;
-          state.xmlMetadata = metadata;
-          state.currentPage = 1;
-
-          const typeLabel = ` (فایل ${FILE_TYPE_LABEL[fileType] || "JSON"})`;
-          showToast(
-            "فایل مبدا بارگذاری شد",
-            `${toPersianNumber(Object.keys(flat).length)} کلید یافت شد${typeLabel}`,
-          );
-        } catch (err) {
-          console.error(err);
-          showToast(
-            "خطا در بارگذاری",
-            "فایل معتبر نیست. لطفاً فایل JSON، XML، YAML، Properties، CSV، INI یا PO بارگذاری کنید",
-            "destructive",
-          );
-          e.target.value = "";
-          return;
-        }
-
-        // اجرای آپدیت UI خارج از بلوک try/catch فایل
-        try {
-          updateUI();
-        } catch (uiErr) {
-          console.error("UI Render Error: ", uiErr);
-        }
-      };
-      reader.onerror = () => {
-        showToast("خطا در خواندن فایل", "امکان خواندن فایل وجود ندارد", "destructive");
+        const typeLabel = ` (فایل ${FILE_TYPE_LABEL[fileType] || "JSON"})`;
+        showToast(
+          "فایل مبدا بارگذاری شد",
+          `${toPersianNumber(Object.keys(flat).length)} کلید یافت شد${typeLabel}`,
+        );
+        try { updateUI(); } catch (uiErr) { console.error("UI Render Error: ", uiErr); }
+      }).catch((err) => {
+        console.error(err);
+        showToast(
+          "خطا در بارگذاری",
+          "فایل معتبر نیست. لطفاً فایل JSON، XML، YAML، Properties، CSV، INI یا PO بارگذاری کنید",
+          "destructive",
+        );
         e.target.value = "";
-      };
-      reader.readAsText(file);
+      });
     }
 
     function handleTargetFile(e) {
@@ -3300,68 +3271,37 @@
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const content = event.target.result;
-          const result = parseFileContent(content, file.name);
-          const flat = result.flat;
-          const targetFileType = result.fileType;
-
-          // Validate detected type matches extension
-          const ext = getFileExtension(file.name).replace(".", "");
-          const detectedExtType = detectFileType(file.name);
-          if (detectedExtType !== targetFileType && targetFileType !== "json") {
-            showToast(
-              "هشدار نوع فایل",
-              `پسوند فایل "${ext}" با محتوای "${targetFileType}" مطابقت ندارد`,
-              "default",
-            );
-          }
-
-          // Check if file types match for better UX
-          if (
-            state.sourceFileType &&
-            targetFileType &&
-            targetFileType !== state.sourceFileType
-          ) {
-            const sourceType = FILE_TYPE_LABEL[state.sourceFileType] || "JSON";
-            const targetType = FILE_TYPE_LABEL[targetFileType] || "JSON";
-            showToast(
-              "هشدار نوع فایل",
-              `فایل مبدا ${sourceType} است اما فایل مقصد ${targetType} است. ممکن است برخی کلیدها مطابقت نداشته باشند.`,
-              "default",
-            );
-          }
-
-          state.targetTranslations = { ...state.targetTranslations, ...flat };
-          state.targetFileName = file.name;
-          state.targetFileType = targetFileType;
-          // Reset file input to allow re-selecting the same file
-          e.target.value = "";
-
-          const matched = Object.keys(flat).filter(
-            (k) => k in state.sourceKeys,
-          ).length;
+      readAndParseFile(file).then(({ flat, fileType }) => {
+        if (state.sourceFileType && fileType && fileType !== state.sourceFileType) {
+          const sourceType = FILE_TYPE_LABEL[state.sourceFileType] || "JSON";
+          const targetType = FILE_TYPE_LABEL[fileType] || "JSON";
           showToast(
-            "فایل مقصد بارگذاری شد",
-            `${toPersianNumber(matched)} کلید مطابقت داشت از ${toPersianNumber(Object.keys(flat).length)} کلید`,
+            "هشدار نوع فایل",
+            `فایل مبدا ${sourceType} است اما فایل مقصد ${targetType} است. ممکن است برخی کلیدها مطابقت نداشته باشند.`,
+            "default",
           );
-          updateUI();
-        } catch (err) {
-          showToast(
-            "خطا در بارگذاری",
-            "فایل معتبر نیست. لطفاً فایل JSON، XML، YAML، Properties، CSV، INI یا PO بارگذاری کنید",
-            "destructive",
-          );
-          e.target.value = "";
         }
-      };
-      reader.onerror = () => {
-        showToast("خطا در خواندن فایل", "امکان خواندن فایل وجود ندارد", "destructive");
+
+        state.targetTranslations = { ...state.targetTranslations, ...flat };
+        state.targetFileName = file.name;
+        state.targetFileType = fileType;
         e.target.value = "";
-      };
-      reader.readAsText(file);
+
+        const matched = Object.keys(flat).filter((k) => k in state.sourceKeys).length;
+        showToast(
+          "فایل مقصد بارگذاری شد",
+          `${toPersianNumber(matched)} کلید مطابقت داشت از ${toPersianNumber(Object.keys(flat).length)} کلید`,
+        );
+        updateUI();
+      }).catch((err) => {
+        console.error(err);
+        showToast(
+          "خطا در بارگذاری",
+          "فایل معتبر نیست. لطفاً فایل JSON، XML، YAML، Properties، CSV، INI یا PO بارگذاری کنید",
+          "destructive",
+        );
+        e.target.value = "";
+      });
     }
 
     function handleExport(format) {
@@ -3374,10 +3314,7 @@
         if (Array.isArray(state.sourceKeys[key])) {
           finalTranslations[key] =
             state.targetTranslations[key] || state.sourceKeys[key];
-        } else if (
-          state.targetTranslations[key] &&
-          state.targetTranslations[key].trim() !== ""
-        ) {
+        } else if (isTranslated(state.targetTranslations[key])) {
           finalTranslations[key] = state.targetTranslations[key];
         }
       }
@@ -3471,11 +3408,7 @@
       }
 
       const targetLang = targetLanguages.current || "fa";
-      const untranslated = Object.keys(state.sourceKeys).filter(
-        (k) =>
-          !state.targetTranslations[k] ||
-          String(state.targetTranslations[k]).trim() === "",
-      );
+      const untranslated = getUntranslatedKeys();
 
       if (untranslated.length === 0) {
         showToast(
@@ -3530,13 +3463,8 @@
     }
 
     function updateBatchCount() {
-      const untranslated = Object.keys(state.sourceKeys).filter(
-        (k) =>
-          !state.targetTranslations[k] ||
-          String(state.targetTranslations[k]).trim() === "",
-      ).length;
       document.getElementById("batch-count").textContent =
-        toPersianNumber(untranslated);
+        toPersianNumber(getUntranslatedKeys().length);
     }
 
     function batchReplaceAll() {
@@ -3579,10 +3507,7 @@
 
       let count = 0;
       for (const key in state.sourceKeys) {
-        if (
-          !state.targetTranslations[key] ||
-          String(state.targetTranslations[key]).trim() === ""
-        ) {
+        if (!isTranslated(state.targetTranslations[key])) {
           const source = state.sourceKeys[key];
           if (typeof source === "string") {
             state.targetTranslations[key] = prefix + source + suffix;
@@ -4087,30 +4012,13 @@
             return;
           }
 
-          const langNames = {
-            fa: ["فارسی", "🇮🇷"],
-            en: ["English", "🇬🇧"],
-            ar: ["العربية", "🇸🇦"],
-            de: ["Deutsch", "🇩🇪"],
-            fr: ["Français", "🇫🇷"],
-            es: ["Español", "🇪🇸"],
-            ru: ["Русский", "🇷🇺"],
-            zh: ["中文", "🇨🇳"],
-            ja: ["日本語", "🇯🇵"],
-            ko: ["한국어", "🇰🇷"],
-            tr: ["Türkçe", "🇹🇷"],
-            ur: ["اردو", "🇵🇰"],
-            hi: ["हिन्दी", "🇮🇳"],
-            pt: ["Português", "🇧🇷"],
-            it: ["Italiano", "🇮🇹"],
-          };
-
           if (targetLanguages.languages[code]) {
             showToast("این زبان قبلاً اضافه شده است", "", "default");
             return;
           }
 
-          const [name, flag] = langNames[code] || [code, ""];
+          const locale = SUPPORTED_LOCALES[code];
+          const [name, flag] = locale ? [locale.name, locale.flag] : [code, ""];
           addTargetLanguage(code, name, flag);
           select.value = "";
           renderLanguageTabs();
@@ -4188,7 +4096,7 @@
       document.getElementById("translation-rows").addEventListener("click", (e) => {
         const row = e.target.closest('[class*="rounded-lg border"]');
         if (!row) return;
-        const textarea = row.querySelector(".translation-input");
+        const textarea = row.querySelector(".translation-input, .plural-input");
         const key = textarea?.dataset.key || "";
 
         // Copy source button
@@ -4211,9 +4119,11 @@
             showToast("هشدار", "آرایه‌ها را نمی‌توان مستقیماً به ترجمه کپی کرد.", "default");
             return;
           }
-          state.targetTranslations[key] = typeof sourceValue === "object" && sourceValue !== null
-            ? JSON.stringify(sourceValue)
-            : String(sourceValue ?? "");
+          if (typeof sourceValue === "object" && sourceValue !== null) {
+            state.targetTranslations[key] = { ...sourceValue };
+          } else {
+            state.targetTranslations[key] = String(sourceValue ?? "");
+          }
           copiedToTranslationKey = key;
           setTimeout(() => (copiedToTranslationKey = null), 1500);
           updateUI();
@@ -4227,7 +4137,15 @@
           const start = textarea.selectionStart;
           const end = textarea.selectionEnd;
           const newValue = textarea.value.slice(0, start) + char + textarea.value.slice(end);
-          state.targetTranslations[key] = newValue;
+          if (textarea.classList.contains("plural-input")) {
+            const quantity = textarea.dataset.quantity;
+            if (!state.targetTranslations[key] || typeof state.targetTranslations[key] !== "object" || Array.isArray(state.targetTranslations[key])) {
+              state.targetTranslations[key] = {};
+            }
+            state.targetTranslations[key][quantity] = newValue;
+          } else {
+            state.targetTranslations[key] = newValue;
+          }
           textarea.value = newValue;
           saveToStorage();
           updateProgressUI();
@@ -4240,16 +4158,25 @@
 
       // Delegated input on translation rows
       document.getElementById("translation-rows").addEventListener("input", (e) => {
-        const textarea = e.target.closest(".translation-input");
+        const textarea = e.target.closest(".translation-input, .plural-input");
         if (!textarea) return;
-        state.targetTranslations[textarea.dataset.key] = textarea.value;
+        const key = textarea.dataset.key;
+        if (textarea.classList.contains("plural-input")) {
+          const quantity = textarea.dataset.quantity;
+          if (!state.targetTranslations[key] || typeof state.targetTranslations[key] !== "object" || Array.isArray(state.targetTranslations[key])) {
+            state.targetTranslations[key] = {};
+          }
+          state.targetTranslations[key][quantity] = textarea.value;
+        } else {
+          state.targetTranslations[key] = textarea.value;
+        }
         saveToStorage();
         updateProgressUI();
       });
 
       // Delegated keydown on translation rows
       document.getElementById("translation-rows").addEventListener("keydown", (e) => {
-        const textarea = e.target.closest(".translation-input");
+        const textarea = e.target.closest(".translation-input, .plural-input");
         if (!textarea) return;
         if (!(e.ctrlKey || e.metaKey) || e.key !== "Enter") return;
         e.preventDefault();
