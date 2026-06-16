@@ -34,6 +34,21 @@
       background: #cbd5e1;
       border-radius: 3px;
     }
+
+    .ai-suggestion {
+      background-color: rgb(236 253 245) !important;
+      border-color: rgb(167 243 208) !important;
+      transition: background-color 0.4s ease, border-color 0.4s ease;
+    }
+
+    @keyframes aiFadeIn {
+      from { background-color: transparent; }
+      to { background-color: rgb(236 253 245); }
+    }
+
+    .ai-fade-in {
+      animation: aiFadeIn 0.5s ease forwards;
+    }
   </style>
 </head>
 
@@ -827,6 +842,9 @@
     const SVG_CHECK = '<svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
     const SVG_COPY = '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
     const SVG_ARROW_LEFT = '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
+    const SVG_AI_MAGIC = '<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>';
+    const SVG_AI_SPINNER = '<div class="h-3 w-3 border-2 border-violet-500 border-t-transparent rounded-full animate-spin"></div>';
+    const SVG_CHECKMARK = '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
 
     // Check if a translation value is non-empty
     function isTranslated(val) {
@@ -3155,6 +3173,10 @@
           label.className = "text-[10px] text-blue-600 font-medium mb-0.5 block";
           label.textContent = "[" + quantity + "]";
           fieldWrap.appendChild(label);
+
+          const inputRow = document.createElement("div");
+          inputRow.className = "flex items-start gap-1";
+
           const textarea = document.createElement("textarea");
           textarea.dataset.key = entry.key;
           textarea.dataset.quantity = quantity;
@@ -3162,17 +3184,71 @@
           textarea.placeholder = "ترجمه...";
           textarea.dir = "auto";
           textarea.value = targetObj[quantity] || "";
-          fieldWrap.appendChild(textarea);
+          inputRow.appendChild(textarea);
+
+          if (!entry.isTranslated) {
+            const aiBtn = document.createElement("button");
+            aiBtn.className = "ai-translate-row-btn shrink-0 p-1.5 rounded-lg border border-violet-200 bg-violet-50 text-violet-600 hover:bg-violet-100 hover:border-violet-300 transition-colors mt-0.5";
+            aiBtn.title = "ترجمه هوشمند این ردیف";
+            aiBtn.dataset.key = entry.key;
+            aiBtn.dataset.quantity = quantity;
+            aiBtn.dataset.source = typeof entry.sourceValue[quantity] === "string" ? entry.sourceValue[quantity] : JSON.stringify(entry.sourceValue[quantity]);
+            aiBtn.innerHTML = SVG_AI_MAGIC;
+
+            if (!TranslationService.config.googleApiKey && !TranslationService.config.deeplApiKey) {
+              aiBtn.disabled = true;
+              aiBtn.classList.add("opacity-50", "cursor-not-allowed");
+              aiBtn.title = "کلید API تنظیم نشده — به تنظیمات بروید";
+              aiBtn.addEventListener("click", (ev) => {
+                ev.stopPropagation();
+                showToast("تنظیمات API", "لطفاً ابتدا کلید API را در تنظیمات وارد کنید.", "destructive");
+                document.getElementById("settings-modal").classList.remove("hidden");
+                document.getElementById("api-key-input").focus();
+              });
+            }
+
+            inputRow.appendChild(aiBtn);
+          }
+
+          fieldWrap.appendChild(inputRow);
           rightCol.appendChild(fieldWrap);
         });
       } else {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex items-start gap-1";
+
         const textarea = document.createElement("textarea");
         textarea.dataset.key = entry.key;
         textarea.className = "translation-input w-full text-sm min-h-[2.5rem] resize-y leading-relaxed border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent";
         textarea.placeholder = "ترجمه...";
         textarea.dir = "auto";
         textarea.value = entry.targetValue || "";
-        rightCol.appendChild(textarea);
+        wrapper.appendChild(textarea);
+
+        if (!entry.isTranslated) {
+          const aiBtn = document.createElement("button");
+          aiBtn.className = "ai-translate-row-btn shrink-0 p-1.5 rounded-lg border border-violet-200 bg-violet-50 text-violet-600 hover:bg-violet-100 hover:border-violet-300 transition-colors mt-0.5";
+          aiBtn.title = "ترجمه هوشمند این ردیف";
+          aiBtn.dataset.key = entry.key;
+          aiBtn.dataset.source = typeof entry.sourceValue === "string" ? entry.sourceValue : JSON.stringify(entry.sourceValue);
+          aiBtn.innerHTML = SVG_AI_MAGIC;
+
+          if (!TranslationService.config.googleApiKey && !TranslationService.config.deeplApiKey) {
+            aiBtn.disabled = true;
+            aiBtn.classList.add("opacity-50", "cursor-not-allowed");
+            aiBtn.title = "کلید API تنظیم نشده — به تنظیمات بروید";
+            aiBtn.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              showToast("تنظیمات API", "لطفاً ابتدا کلید API را در تنظیمات وارد کنید.", "destructive");
+              document.getElementById("settings-modal").classList.remove("hidden");
+              document.getElementById("api-key-input").focus();
+            });
+          }
+
+          wrapper.appendChild(aiBtn);
+        }
+
+        rightCol.appendChild(wrapper);
       }
 
       grid.appendChild(rightCol);
@@ -3453,6 +3529,85 @@
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg> ترجمه هوشمند`;
+      }
+    }
+
+    async function handleRowAITranslate(key, sourceText, textarea, aiBtn) {
+      if (!TranslationService.isEnabled()) {
+        showToast("ترجمه هوشمند غیرفعال است", "از تنظیمات آن را فعال کنید.", "destructive");
+        return;
+      }
+
+      if (!TranslationService.config.googleApiKey && !TranslationService.config.deeplApiKey) {
+        showToast("تنظیمات API", "لطفاً ابتدا کلید API را در تنظیمات وارد کنید.", "destructive");
+        document.getElementById("settings-modal").classList.remove("hidden");
+        document.getElementById("api-key-input").focus();
+        return;
+      }
+
+      const isPlural = textarea.classList.contains("plural-input");
+      const quantity = textarea.dataset.quantity;
+
+      aiBtn.disabled = true;
+      aiBtn.innerHTML = SVG_AI_SPINNER;
+      textarea.disabled = true;
+      textarea.placeholder = "در حال ترجمه...";
+
+      try {
+        const targetLang = targetLanguages.current || "fa";
+        const translated = await TranslationService.translate(sourceText, targetLang, "auto");
+
+        textarea.value = translated;
+        textarea.classList.add("ai-suggestion", "ai-fade-in");
+        textarea.disabled = false;
+        textarea.focus();
+
+        if (isPlural) {
+          if (!state.targetTranslations[key] || typeof state.targetTranslations[key] !== "object" || Array.isArray(state.targetTranslations[key])) {
+            state.targetTranslations[key] = {};
+          }
+          state.targetTranslations[key][quantity] = translated;
+        } else {
+          state.targetTranslations[key] = translated;
+        }
+        saveToStorage();
+        updateProgressUI();
+
+        aiBtn.innerHTML = SVG_CHECKMARK;
+        aiBtn.className = "ai-save-btn shrink-0 p-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:border-emerald-300 transition-colors mt-0.5";
+        aiBtn.title = "ذخیره";
+        aiBtn.disabled = false;
+
+        textarea.addEventListener("input", () => {
+          if (isPlural) {
+            if (!state.targetTranslations[key] || typeof state.targetTranslations[key] !== "object" || Array.isArray(state.targetTranslations[key])) {
+              state.targetTranslations[key] = {};
+            }
+            state.targetTranslations[key][quantity] = textarea.value;
+          } else {
+            state.targetTranslations[key] = textarea.value;
+          }
+          saveToStorage();
+          updateProgressUI();
+        });
+
+      } catch (err) {
+        textarea.disabled = false;
+        textarea.placeholder = "ترجمه...";
+        aiBtn.innerHTML = SVG_AI_MAGIC;
+        aiBtn.disabled = false;
+
+        const row = aiBtn.closest('[class*="rounded-lg border"]');
+        if (row) {
+          const errDiv = document.createElement("div");
+          errDiv.className = "text-[10px] text-red-500 mt-1 px-1 ai-fade-in";
+          errDiv.textContent = err.message;
+          const rightCol = aiBtn.closest(".px-3.py-2");
+          if (rightCol) {
+            rightCol.appendChild(errDiv);
+            setTimeout(() => errDiv.remove(), 4000);
+          }
+        }
       }
     }
 
@@ -4099,6 +4254,38 @@
         const textarea = row.querySelector(".translation-input, .plural-input");
         const key = textarea?.dataset.key || "";
 
+        // AI Translate row button
+        const aiTranslateBtn = e.target.closest(".ai-translate-row-btn");
+        if (aiTranslateBtn) {
+          e.stopPropagation();
+          const translateKey = aiTranslateBtn.dataset.key;
+          const sourceText = aiTranslateBtn.dataset.source;
+          const targetTextarea = row.querySelector(`textarea[data-key="${CSS.escape(translateKey)}"]`);
+          if (targetTextarea) {
+            handleRowAITranslate(translateKey, sourceText, targetTextarea, aiTranslateBtn);
+          }
+          return;
+        }
+
+        // AI Save button (after translation suggestion)
+        const aiSaveBtn = e.target.closest(".ai-save-btn");
+        if (aiSaveBtn) {
+          e.stopPropagation();
+          const saveKey = aiSaveBtn.dataset.key || key;
+          const saveTextarea = row.querySelector(`textarea[data-key="${CSS.escape(saveKey)}"]`);
+          if (saveTextarea) {
+            saveTextarea.classList.remove("ai-suggestion", "ai-fade-in");
+            aiSaveBtn.innerHTML = SVG_CHECK;
+            aiSaveBtn.className = "shrink-0 p-1.5 rounded-lg text-emerald-500 mt-0.5";
+            aiSaveBtn.disabled = true;
+            saveTargetLanguages();
+            saveToStorage();
+            updateProgressUI();
+            showToast("ترجمه ذخیره شد");
+          }
+          return;
+        }
+
         // Copy source button
         if (e.target.closest(".copy-source-btn")) {
           const sourceValue = state.sourceKeys[key];
@@ -4178,6 +4365,26 @@
       document.getElementById("translation-rows").addEventListener("keydown", (e) => {
         const textarea = e.target.closest(".translation-input, .plural-input");
         if (!textarea) return;
+
+        if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+          if (textarea.classList.contains("ai-suggestion")) {
+            e.preventDefault();
+            textarea.classList.remove("ai-suggestion", "ai-fade-in");
+            const wrapper = textarea.parentElement;
+            const saveBtn = wrapper ? wrapper.querySelector('.ai-save-btn') : null;
+            if (saveBtn) {
+              saveBtn.innerHTML = SVG_CHECK;
+              saveBtn.className = "shrink-0 p-1.5 rounded-lg text-emerald-500 mt-0.5";
+              saveBtn.disabled = true;
+            }
+            saveTargetLanguages();
+            saveToStorage();
+            updateProgressUI();
+            showToast("ترجمه ذخیره شد");
+            return;
+          }
+        }
+
         if (!(e.ctrlKey || e.metaKey) || e.key !== "Enter") return;
         e.preventDefault();
 
