@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ابزار ترجمه محلی</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: 'class',
     }
   </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
   <style>
     * { font-family: 'Vazirmatn', system-ui, sans-serif; }
     textarea { resize: vertical; }
@@ -239,6 +239,7 @@
             <div class="space-y-2">
               <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200">جستجو</h3>
               <div class="relative">
+                <label for="search-input" class="sr-only">جستجو در کلیدها یا متن</label>
                 <svg class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
@@ -322,6 +323,7 @@
             <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-4">
               <span id="results-count">۰ رشته</span>
               <div class="flex items-center gap-2">
+                <label for="page-size" class="sr-only">تعداد ردیف در هر صفحه</label>
                 <span id="filter-mode-text">نمایش همه</span>
                 <select id="page-size" class="hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded px-1.5 py-0.5 text-[11px] text-slate-600 dark:text-slate-300">
                   <option value="25">۲۵ ردیف</option>
@@ -571,8 +573,12 @@
     const THEME_KEY = 'translation-tool-theme';
     
     function getPreferredTheme() {
-      const saved = localStorage.getItem(THEME_KEY);
-      if (saved) return saved;
+      try {
+        const saved = localStorage.getItem(THEME_KEY);
+        if (saved) return saved;
+      } catch (e) {
+        // Storage access denied, fall through to system preference
+      }
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     
@@ -670,17 +676,37 @@
 
     function calculateProgress() {
       const total = Object.keys(state.sourceKeys).length;
-      const translated = Object.keys(state.targetTranslations).filter(
-        k => state.targetTranslations[k] && state.targetTranslations[k].trim !== '' && (
-          typeof state.targetTranslations[k] === 'string'
-            ? state.targetTranslations[k].trim() !== ''
-            : Array.isArray(state.targetTranslations[k]) && state.targetTranslations[k].length > 0
-        )
-      ).length;
+      let translated = 0;
+      
+      for (const key of Object.keys(state.targetTranslations)) {
+        const value = state.targetTranslations[key];
+        if (value == null) continue;
+        
+        if (typeof value === 'string') {
+          if (value.trim() !== '') translated++;
+        } else if (Array.isArray(value)) {
+          if (value.length > 0) translated++;
+        }
+      }
+      
       const missing = total - translated;
       const percentage = total > 0 ? Math.round((translated / total) * 100) : 0;
       
       return { total, translated, missing, percentage };
+    }
+
+    function updateProgressUI() {
+      const progress = calculateProgress();
+      document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
+      document.getElementById('progress-text').textContent = 
+        `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
+      document.getElementById('translated-count').textContent = toPersianNumber(progress.translated);
+      document.getElementById('missing-count').textContent = toPersianNumber(progress.missing);
+      
+      // Update filter counts
+      document.getElementById('filter-count-all').textContent = toPersianNumber(Object.keys(state.sourceKeys).length);
+      document.getElementById('filter-count-missing').textContent = toPersianNumber(progress.missing);
+      document.getElementById('filter-count-translated').textContent = toPersianNumber(progress.translated);
     }
 
     function getFilteredEntries() {
@@ -758,39 +784,43 @@
           ? '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>'
           : '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
         
-        fileInfo.innerHTML += `
-          <div class="flex items-center gap-2 text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg px-3 py-2">
-            ${icon}
-            <span class="font-medium truncate">${state.sourceFileName}</span>
-            <span class="mr-auto text-[9px] px-1.5 py-0 rounded border border-emerald-300 dark:border-emerald-600 text-emerald-600 dark:text-emerald-400">${state.sourceFileType.toUpperCase()}</span>
-          </div>
-        `;
+        const fileNameSpan = document.createElement('span');
+        fileNameSpan.className = 'font-medium truncate';
+        fileNameSpan.textContent = state.sourceFileName;
+        
+        const typeBadge = document.createElement('span');
+        typeBadge.className = 'mr-auto text-[9px] px-1.5 py-0 rounded border border-emerald-300 dark:border-emerald-600 text-emerald-600 dark:text-emerald-400';
+        typeBadge.textContent = state.sourceFileType.toUpperCase();
+        
+        const fileDiv = document.createElement('div');
+        fileDiv.className = 'flex items-center gap-2 text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg px-3 py-2';
+        fileDiv.innerHTML = icon;
+        fileDiv.appendChild(fileNameSpan);
+        fileDiv.appendChild(typeBadge);
+        
+        fileInfo.appendChild(fileDiv);
       }
       
       if (state.targetFileName) {
-        fileInfo.innerHTML += `
-          <div class="flex items-center gap-2 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg px-3 py-2">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            <span class="font-medium truncate">${state.targetFileName}</span>
-            <span class="mr-auto text-blue-500 dark:text-blue-400">مقصد</span>
-          </div>
-        `;
+        const fileNameSpan = document.createElement('span');
+        fileNameSpan.className = 'font-medium truncate';
+        fileNameSpan.textContent = state.targetFileName;
+        
+        const targetLabel = document.createElement('span');
+        targetLabel.className = 'mr-auto text-blue-500 dark:text-blue-400';
+        targetLabel.textContent = 'مقصد';
+        
+        const fileDiv = document.createElement('div');
+        fileDiv.className = 'flex items-center gap-2 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg px-3 py-2';
+        fileDiv.innerHTML = '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+        fileDiv.appendChild(fileNameSpan);
+        fileDiv.appendChild(targetLabel);
+        
+        fileInfo.appendChild(fileDiv);
       }
       
       // Update progress
-      const progress = calculateProgress();
-      document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
-      document.getElementById('progress-text').textContent = 
-        `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
-      document.getElementById('translated-count').textContent = toPersianNumber(progress.translated);
-      document.getElementById('missing-count').textContent = toPersianNumber(progress.missing);
-      
-      // Update filter counts
-      document.getElementById('filter-count-all').textContent = toPersianNumber(Object.keys(state.sourceKeys).length);
-      document.getElementById('filter-count-missing').textContent = toPersianNumber(progress.missing);
-      document.getElementById('filter-count-translated').textContent = toPersianNumber(progress.translated);
+      updateProgressUI();
       
       // Update filter buttons
       const filterButtons = document.querySelectorAll('.filter-btn');
@@ -872,19 +902,21 @@
       if (isPlural) {
         const parts = entry.key.split('[');
         const match = entry.key.match(/\[(.+?)\]/);
+        const baseKey = escapeHtml(parts[0]);
+        const pluralForm = match ? escapeHtml(match[1]) : '';
         keyDisplay = `
-          <span class="text-violet-600 dark:text-violet-400">${parts[0]}</span>
+          <span class="text-violet-600 dark:text-violet-400">${baseKey}</span>
           <span class="text-slate-400 dark:text-slate-500">[</span>
-          <span class="text-amber-600 dark:text-amber-400">${match ? match[1] : ''}</span>
+          <span class="text-amber-600 dark:text-amber-400">${pluralForm}</span>
           <span class="text-slate-400 dark:text-slate-500">]</span>
         `;
       } else {
-        keyDisplay = entry.key;
+        keyDisplay = escapeHtml(entry.key);
       }
       
       const sourceDisplay = Array.isArray(entry.sourceValue) 
-        ? entry.sourceValue.map((v, i) => `<div class="py-0.5 border-b border-slate-100 dark:border-slate-700 last:border-0">[${i}] ${v}</div>`).join('')
-        : entry.sourceValue;
+        ? entry.sourceValue.map((v, i) => `<div class="py-0.5 border-b border-slate-100 dark:border-slate-700 last:border-0">[${i}] ${escapeHtml(v)}</div>`).join('')
+        : escapeHtml(entry.sourceValue);
       
       const specialChars = Array.isArray(entry.sourceValue) ? [] : extractSpecialChars(entry.sourceValue);
       
@@ -926,7 +958,7 @@
             ${specialChars.length > 0 ? `
               <div class="flex flex-wrap gap-1 mt-1.5">
                 ${specialChars.map(char => `
-                  <button class="special-char-btn dir-ltr inline-flex items-center px-1.5 py-0.5 text-[11px] font-mono bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700 rounded hover:bg-violet-100 dark:hover:bg-violet-800/40 hover:border-violet-300 transition-colors cursor-pointer" title="درج ${char} در محل نشانگر">${char}</button>
+                  <button class="special-char-btn dir-ltr inline-flex items-center px-1.5 py-0.5 text-[11px] font-mono bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700 rounded hover:bg-violet-100 dark:hover:bg-violet-800/40 hover:border-violet-300 transition-colors cursor-pointer" title="درج ${escapeHtml(char)} در محل نشانگر">${escapeHtml(char)}</button>
                 `).join('')}
               </div>
             ` : ''}
@@ -939,11 +971,17 @@
                   class="translation-input w-full text-sm min-h-[2.5rem] resize-y leading-relaxed border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
                   placeholder="ترجمه..."
                   dir="auto"
-                >${entry.targetValue}</textarea>`
+                ></textarea>`
             }
           </div>
         </div>
       `;
+      
+      // Set textarea value safely via textContent
+      const textarea = div.querySelector('.translation-input');
+      if (textarea && typeof entry.targetValue === 'string') {
+        textarea.textContent = entry.targetValue;
+      }
       
       // Event listeners
       const copySourceBtn = div.querySelector('.copy-source-btn');
@@ -974,14 +1012,7 @@
         textarea.addEventListener('input', (e) => {
           state.targetTranslations[entry.key] = e.target.value;
           saveToStorage();
-          const progress = calculateProgress();
-          document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
-          document.getElementById('progress-text').textContent = 
-            `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
-          document.getElementById('translated-count').textContent = toPersianNumber(progress.translated);
-          document.getElementById('missing-count').textContent = toPersianNumber(progress.missing);
-          document.getElementById('filter-count-translated').textContent = toPersianNumber(progress.translated);
-          document.getElementById('filter-count-missing').textContent = toPersianNumber(progress.missing);
+          updateProgressUI();
         });
         
         textarea.addEventListener('keydown', (e) => {
@@ -1025,10 +1056,7 @@
           state.targetTranslations[entry.key] = newValue;
           textarea.value = newValue;
           
-          const progress = calculateProgress();
-          document.getElementById('progress-bar').style.width = `${progress.percentage}%`;
-          document.getElementById('progress-text').textContent = 
-            `${toPersianNumber(progress.translated)} از ${toPersianNumber(progress.total)} رشته ترجمه شده است (${toPersianNumber(progress.percentage)}٪)`;
+          updateProgressUI();
           
           requestAnimationFrame(() => {
             textarea.selectionStart = textarea.selectionEnd = start + char.length;
@@ -1068,8 +1096,9 @@
       sourceDropzone.addEventListener('drop', (e) => {
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-          sourceInput.files = files;
-          sourceInput.dispatchEvent(new Event('change'));
+          const [file] = files;
+          if (!file) return;
+          handleSourceFile({ target: { files: [file] } });
         }
       });
       
@@ -1093,14 +1122,11 @@
       targetDropzone.addEventListener('drop', (e) => {
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-          targetInput.files = files;
-          targetInput.dispatchEvent(new Event('change'));
+          const [file] = files;
+          if (!file) return;
+          handleTargetFile({ target: { files: [file] } });
         }
       });
-      
-      // Prevent body from handling drops
-      document.body.addEventListener('dragover', (e) => e.preventDefault());
-      document.body.addEventListener('drop', (e) => e.preventDefault());
     }
 
     // ===== Event Handlers =====
